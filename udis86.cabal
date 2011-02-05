@@ -18,8 +18,10 @@ library
   exposed-modules:  
       Udis86.Instructions
     , Udis86.C
+    , Udis86.Types
     , Udis86.IO
   ghc-options:       -Wall
   build-depends:
-      base           >= 3 && < 5
+      base       >= 3 && < 5
+    , containers >= 0.3
   extra-libraries: udis86
