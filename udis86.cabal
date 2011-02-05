@@ -1,0 +1,25 @@
+name:                udis86
+version:             0.1
+license:             BSD3
+license-file:        LICENSE
+synopsis:            Bindings to the udis86 x86 disassembler
+category:            FIXME
+author:              Keegan McAllister <mcallister.keegan@gmail.com>
+maintainer:          Keegan McAllister <mcallister.keegan@gmail.com>
+homepage:            FIXME
+build-type:          Simple
+cabal-version:       >=1.2
+description:
+  FIXME
+extra-source-files:
+    examples/fixme.hs
+
+library
+  exposed-modules:  
+      Udis86.Instructions
+    , Udis86.C
+    , Udis86.IO
+  ghc-options:       -Wall
+  build-depends:
+      base           >= 3 && < 5
+  extra-libraries: udis86
