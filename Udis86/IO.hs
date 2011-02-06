@@ -197,12 +197,12 @@ setVendorAMD   = setVendor udVendorAmd
 -- | Disassemble the next instruction and return its length in bytes.
 --
 -- Returns zero if there are no more instructions.
-disassemble :: UD -> IO UInt
-disassemble = flip withUDPtr ud_disassemble
+disassemble :: UD -> IO Word
+disassemble = (fromIntegral <$>) . flip withUDPtr ud_disassemble
 
 -- | Get the length of the current instruction in bytes.
-getLength :: UD -> IO UInt
-getLength = flip withUDPtr ud_insn_len
+getLength :: UD -> IO Word
+getLength = (fromIntegral <$>) . flip withUDPtr ud_insn_len
 
 -- | Get the offset of the current instruction from FIXME.
 getOffset :: UD -> IO Word64
@@ -220,7 +220,7 @@ getBytes :: UD -> IO BS.ByteString
 getBytes s = withUDPtr s $ \p -> do
   len <- ud_insn_len p
   ptr <- ud_insn_ptr p
-  -- Int vs. UInt overflow problems?
+  -- Int vs. CUInt overflow problems?
   BS.packCStringLen (castPtr ptr, fromIntegral len)
 
 -- | Get the assembly syntax for the current instruction.
@@ -231,7 +231,7 @@ getAssembly s = withUDPtr s $ \p ->
   ud_insn_asm p >>= peekCString
 
 -- | Skip the next /n/ bytes of the input.
-skip :: UD -> UInt -> IO ()
+skip :: UD -> Word -> IO ()
 skip s n = withUDPtr s $ flip ud_input_skip (fromIntegral n)
 
 getPfx :: Ptr UD_t -> IO [Prefix]

@@ -3,11 +3,8 @@
 
 -- | Types provided by the disassembler.
 module Udis86.Types
-  ( -- * Integral types
-    UInt, WordSize(..), bitsInWord
-
-    -- * Instructions
-  , Instruction(..)
+  (  -- * Instructions
+    Instruction(..)
   , Prefix(..)
   , Operand(..), Memory(..), Register(..), Pointer(..), Immediate(..)
 
@@ -15,6 +12,9 @@ module Udis86.Types
   , GPR(..), Half(..)
   , Segment(..), ControlRegister(..), DebugRegister(..)
   , MMXRegister(..), X87Register(..), XMMRegister(..)
+
+    -- * Word sizes
+  , WordSize(..), bitsInWord
 
     -- * Opcodes
   , Opcode(..)
@@ -30,12 +30,8 @@ import Data.Typeable ( Typeable )
 import Data.Data     ( Data )
 import Data.Maybe
 import Data.Word
-import Foreign.C.Types ( CUInt )
 
 import qualified Data.IntMap as IM
-
--- | Unsigned integer.
-type UInt = CUInt
 
 -- | Some fields, such as immediate operands, come in different
 --   widths.  We store the equivalent integer value in a @'Word64'@,
@@ -170,7 +166,7 @@ data Memory = Memory
 -- | A segmented pointer operand.
 data Pointer = Pointer
   { pSegment    :: Word16    -- ^ Segment
-  , pOffsetSize :: WordSize  -- ^ Size of offset (@'Bits16'@ or @'Bits32'@)
+  , pOffsetSize :: WordSize  -- ^ Size of the offset, 16 or 32 bits
   , pOffset     :: Word32    -- ^ Offset
   } deriving (Eq, Ord, Show, Typeable, Data)
 
