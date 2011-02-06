@@ -32,9 +32,12 @@ module Udis86.IO
   , getHex, getBytes, getAssembly
 
     -- * Configuration
+  , setConfig
   , setWordSize
   , setSyntax
   , setVendor
+
+    -- * Callbacks
   , setCallback
   ) where
 
@@ -182,6 +185,16 @@ setVendor :: UD -> Vendor -> IO ()
 setVendor ud = withUDPtr ud . flip ud_set_vendor . f where
   f Intel = udVendorIntel
   f AMD   = udVendorAmd
+
+-- | Set an overall configuration.
+--
+-- Calls each of @'setVendor'@, @'setWordSize'@, @'setSyntax'@, @'setIP'@.
+setConfig :: UD -> Config -> IO ()
+setConfig ud Config{..} = do
+  setVendor   ud cfgVendor
+  setWordSize ud cfgWordSize
+  setSyntax   ud cfgSyntax
+  setIP       ud cfgOrigin
 
 -- | Disassemble the next instruction and return its length in bytes.
 --

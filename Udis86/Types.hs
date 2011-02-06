@@ -17,7 +17,11 @@ module Udis86.Types
   , WordSize(..), bitsInWord
 
     -- * Configuration
+  , Config(..)
   , Vendor(..), Syntax(..)
+
+    -- * Common configurations
+  , intel32, intel64, amd32, amd64
 
     -- * Opcodes
   , Opcode(..)
@@ -57,7 +61,7 @@ bitsInWord Bits16 = 16
 bitsInWord Bits32 = 32
 bitsInWord Bits64 = 64
 
--- | An `x86` \/ `amd64` register.
+-- | An @x86@ \/ @amd64@ register.
 data Register
   = RegNone                 -- ^ No register specified.
   | Reg8   GPR Half         -- ^ Either 8-bit half of the low 16 bits
@@ -134,7 +138,7 @@ data XMMRegister
   | XMM12 | XMM13 | XMM14 | XMM15
   deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
--- | An `x86` \/ `amd64` CPU instruction.
+-- | An @x86@ \/ @amd64@ CPU instruction.
 data Instruction
   = Inst [Prefix] Opcode [Operand]
   deriving (Eq, Ord, Show, Read, Typeable, Data)
@@ -195,6 +199,20 @@ data Syntax
   | SyntaxIntel  -- ^ Intel- / NASM-like syntax
   | SyntaxATT    -- ^ AT&T- / @gas@-like syntax
   deriving (Eq, Ord, Show, Read, Enum, Bounded, Typeable, Data)
+
+-- | Overall configuration of the disassembler.
+data Config = Config
+  { cfgVendor   :: Vendor    -- ^ CPU vendor; determines the instruction set used
+  , cfgWordSize :: WordSize  -- ^ Disassemble 16-, 32-, or 64-bit code
+  , cfgSyntax   :: Syntax    -- ^ Syntax to use when generating assembly
+  , cfgOrigin   :: Word64    -- ^ Address where the first instruction would live in memory
+  } deriving (Eq, Ord, Show, Read, Typeable, Data)
+
+intel32, intel64, amd32, amd64 :: Config
+intel32 = Config Intel Bits32 SyntaxNone 0
+intel64 = Config Intel Bits64 SyntaxNone 0
+amd32   = Config AMD   Bits32 SyntaxNone 0
+amd64   = Config AMD   Bits64 SyntaxNone 0
 
 newtype UDTM v = UDTM (IM.IntMap v)
 
