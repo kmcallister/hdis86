@@ -41,7 +41,7 @@ data WordSize
   | Bits16
   | Bits32
   | Bits64
-  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+  deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | Number of bits in a word of a given size.
 bitsInWord :: WordSize -> Int
@@ -67,7 +67,7 @@ data Register
   | RegX87 X87Register      -- ^ @x87@ floating point unit register
   | RegXMM XMMRegister      -- ^ XMM register
   | RegIP                   -- ^ Instruction pointer
-  deriving (Eq, Ord, Show, Typeable, Data)
+  deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | A general-purpose register.
 --
@@ -78,18 +78,18 @@ data GPR
   | RSP | RBP | RSI | RDI
   | R8  | R9  | R10 | R11
   | R12 | R13 | R14 | R15
-  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+  deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | Indicates which half of a 16-bit register is used as an 8-bit register.
 data Half
   = L  -- ^ Low or least significant 8 bits
   | H  -- ^ High or most significant 8 bits
-  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+  deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | A segment register.
 data Segment
   = ES | CS | SS | DS | FS | GS
-  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+  deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | A control register.
 data ControlRegister
@@ -97,7 +97,7 @@ data ControlRegister
   | CR4  | CR5  | CR6  | CR7
   | CR8  | CR9  | CR10 | CR11
   | CR12 | CR13 | CR14 | CR15
-  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+  deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | A debug register.
 data DebugRegister
@@ -105,19 +105,19 @@ data DebugRegister
   | DR4  | DR5  | DR6  | DR7
   | DR8  | DR9  | DR10 | DR11
   | DR12 | DR13 | DR14 | DR15
-  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+  deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | An MMX register.
 data MMXRegister
   = MM0  | MM1  | MM2  | MM3
   | MM4  | MM5  | MM6  | MM7
-  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+  deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | An @x87@ floating-point unit register.
 data X87Register
   = ST0  | ST1  | ST2  | ST3
   | ST4  | ST5  | ST6  | ST7
-  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+  deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | An XMM register.
 data XMMRegister
@@ -125,12 +125,12 @@ data XMMRegister
   | XMM4  | XMM5  | XMM6  | XMM7
   | XMM8  | XMM9  | XMM10 | XMM11
   | XMM12 | XMM13 | XMM14 | XMM15
-  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+  deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | An `x86` \/ `amd64` CPU instruction.
 data Instruction
   = Inst [Prefix] Opcode [Operand]
-  deriving (Eq, Ord, Show, Typeable, Data)
+  deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | Prefixes, used to modify an instruction.
 data Prefix
@@ -142,7 +142,7 @@ data Prefix
   | Rep          -- ^ Repeat
   | RepE         -- ^ Repeat while equal
   | RepNE        -- ^ Repeat while not equal
-  deriving (Eq, Ord, Show, Typeable, Data)
+  deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | Instruction operands.
 data Operand
@@ -152,7 +152,7 @@ data Operand
   | Imm   Immediate  -- ^ Immediate value
   | Jump  Immediate  -- ^ Immediate value, for branch instructions
   | Const Immediate  -- ^ Constant value
-  deriving (Eq, Ord, Show, Typeable, Data)
+  deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | A memory-access operand.
 data Memory = Memory
@@ -161,20 +161,20 @@ data Memory = Memory
   , mScale        :: Word8     -- ^ Scale of index
   , mOffsetSize   :: WordSize  -- ^ Size of displacement / offset field
   , mOffset       :: Word64    -- ^ Displacement / offset value
-  } deriving (Eq, Ord, Show, Typeable, Data)
+  } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | A segmented pointer operand.
 data Pointer = Pointer
   { pSegment    :: Word16    -- ^ Segment
   , pOffsetSize :: WordSize  -- ^ Size of the offset, 16 or 32 bits
   , pOffset     :: Word32    -- ^ Offset
-  } deriving (Eq, Ord, Show, Typeable, Data)
+  } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | An immediate operand.
 data Immediate = Immediate
   { iSize  :: WordSize  -- ^ Size of the field
   , iValue :: Word64    -- ^ Immediate value
-  } deriving (Eq, Ord, Show, Typeable, Data)
+  } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 regMap :: IM.IntMap Register
 regMap = IM.fromList [
