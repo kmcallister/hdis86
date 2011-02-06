@@ -16,7 +16,7 @@ extra-source-files:
 
 library
   exposed-modules:  
-      Udis86.Instructions
+      Udis86.Opcode
     , Udis86.C
     , Udis86.Types
     , Udis86.IO

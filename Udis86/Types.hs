@@ -12,7 +12,7 @@ module Udis86.Types
   ) where
 
 import Udis86.C
-import Udis86.Instructions
+import Udis86.Opcode
 
 import Data.Typeable ( Typeable )
 import Data.Data     ( Data )
