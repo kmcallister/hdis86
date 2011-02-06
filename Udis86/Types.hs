@@ -155,7 +155,7 @@ data Prefix
 data Operand
   = Mem   Memory              -- ^ Memory access
   | Reg   Register            -- ^ Register
-  | Ptr   Pointer             -- ^ Pointer (segment:offset)
+  | Ptr   Pointer             -- ^ Segmented pointer
   | Imm   (Immediate Word64)  -- ^ Immediate value
   | Jump  (Immediate Int64 )  -- ^ Immediate value, for a relative jump
   | Const (Immediate Word64)  -- ^ Constant value

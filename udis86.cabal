@@ -2,7 +2,7 @@ name:                udis86
 version:             0.1
 license:             BSD3
 license-file:        LICENSE
-synopsis:            Bindings to the udis86 x86 disassembler
+synopsis:            Interface to the udis86 disassembler for x86 / AMD64
 category:            FIXME
 author:              Keegan McAllister <mcallister.keegan@gmail.com>
 maintainer:          Keegan McAllister <mcallister.keegan@gmail.com>

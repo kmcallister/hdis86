@@ -50,6 +50,7 @@ import Control.Monad
 import Data.Maybe
 
 import qualified Data.ByteString          as BS
+import Data.ByteString ( ByteString )
 import qualified Data.ByteString.Internal as BS
 
 -- We keep track of the current input source and
@@ -132,10 +133,12 @@ setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
 
 -- FIXME: setInputFile
 
--- | Disassemble machine code from a @'ByteString'@.
+-- | Set up the @'UD'@ instance to read machine code from a @'ByteString'@.
 --
--- This does not involve copying the contents.
-setInputBuffer :: UD -> BS.ByteString -> IO ()
+
+-- The caller has no obligation to keep the @'ByteString'@ value live,
+-- and no copy is made.
+setInputBuffer :: UD -> ByteString -> IO ()
 setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
   let (ptr, off, len) = BS.toForeignPtr bs
   ud_set_input_buffer udPtr
@@ -202,7 +205,7 @@ getHex s = withUDPtr s $ \p ->
 -- | Get the current instruction's machine code as a @'ByteString'@.
 --
 -- The bytes are copied out of internal state.
-getBytes :: UD -> IO BS.ByteString
+getBytes :: UD -> IO ByteString
 getBytes s = withUDPtr s $ \p -> do
   len <- ud_insn_len p
   ptr <- ud_insn_ptr p
