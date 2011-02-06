@@ -4,24 +4,29 @@
 
 module Udis86.C where
 
-import Udis86.Instructions
-
 import Foreign
 import Foreign.C
+import Control.Monad ( liftM2 )
 
 #include <udis86.h>
 
 
 data UD_t
 
-type CInputHook = IO CInt
+sizeof_ud_t :: Int
+sizeof_ud_t = (#size ud_t)
+
+type CInputHook = IO Int
 type CTranslator = Ptr UD_t -> IO ()
 
 foreign import ccall "wrapper"
-  mkInputHook :: CInputHook -> IO (FunPtr CInputHook)
+  c_mkInputHook :: CInputHook -> IO (FunPtr CInputHook)
 
 foreign import ccall "wrapper"
-  mkTranslator :: CTranslator -> IO (FunPtr CTranslator)
+  c_mkTranslator :: CTranslator -> IO (FunPtr CTranslator)
+
+ud_eoi :: Int
+ud_eoi = (#const UD_EOI)
 
 
 foreign import ccall "ud_init"
@@ -76,8 +81,8 @@ foreign import ccall "&ud_translate_att"
   ud_translate_att :: FunPtr CTranslator
 
 
-get_mnemonic :: Ptr UD_t -> IO Opcode
-get_mnemonic p = toEnum `fmap` (#peek struct ud, mnemonic) p
+get_mnemonic :: Ptr UD_t -> IO Int
+get_mnemonic p = (#peek struct ud, mnemonic) p
 
 data UD_operand
 
@@ -96,8 +101,17 @@ get_size   = (#peek struct ud_operand, size)
 get_offset = (#peek struct ud_operand, offset)
 get_scale  = (#peek struct ud_operand, scale)
 
-get_lval :: Ptr UD_operand -> IO Word64
-get_lval = (#peek struct ud_operand, lval)
+get_lval8  :: Ptr UD_operand -> IO Word8
+get_lval8  = (#peek struct ud_operand, lval)
+get_lval16 :: Ptr UD_operand -> IO Word16
+get_lval16 = (#peek struct ud_operand, lval)
+get_lval32 :: Ptr UD_operand -> IO Word32
+get_lval32 = (#peek struct ud_operand, lval)
+get_lval64 :: Ptr UD_operand -> IO Word64
+get_lval64 = (#peek struct ud_operand, lval)
+get_lval_ptr :: Ptr UD_operand -> IO (Word16, Word32)
+get_lval_ptr p = liftM2 (,) ((#peek struct ud_operand, lval.ptr.seg) p)
+                            ((#peek struct ud_operand, lval.ptr.off) p)
 
 get_pfx_rex, get_pfx_seg, get_pfx_opr, get_pfx_adr,
   get_pfx_lock, get_pfx_rep, get_pfx_repe, get_pfx_repne :: Ptr UD_t -> IO (#type uint8_t)
@@ -114,7 +128,9 @@ get_pc :: Ptr UD_t -> IO (#type uint64_t)
 get_pc = (#peek ud_t, pc)
 
 
--- enum ud_type { ... }
+type UD_vendor = CUInt
+#enum UD_vendor,, UD_VENDOR_INTEL, UD_VENDOR_AMD
+
 type UD_type = Int
 #{enum UD_type,,
   UD_NONE,
@@ -154,6 +170,5 @@ type UD_type = Int
   UD_R_XMM8,    UD_R_XMM9,      UD_R_XMM10,     UD_R_XMM11,
   UD_R_XMM12,   UD_R_XMM13,     UD_R_XMM14,     UD_R_XMM15,
   UD_R_RIP,
-
   UD_OP_REG,    UD_OP_MEM,      UD_OP_PTR,      UD_OP_IMM,
   UD_OP_JIMM,   UD_OP_CONST }

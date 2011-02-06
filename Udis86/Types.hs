@@ -1,20 +1,41 @@
 {-# LANGUAGE
     DeriveDataTypeable #-}
 module Udis86.Types
-  ( Register(..), GPR(..), Half(..)
+  ( UInt, WordSize(..), bitsInWord
+  , Operand(..), Memory(..), Pointer(..), Immediate(..)
+  , Prefix(..), Instruction(..)
+  , Register(..), GPR(..), Half(..)
   , Segment(..), ControlRegister(..), DebugRegister(..)
   , MMXRegister(..), X87Register(..), XMMRegister(..)
-  , getRegister
+  , Opcode(..)
+  , register, opcode
   ) where
 
 import Udis86.C
+import Udis86.Instructions
 
 import Data.Typeable ( Typeable )
 import Data.Data     ( Data )
-
 import Data.Maybe
+import Data.Word
+import Foreign.C.Types ( CUInt )
 
 import qualified Data.IntMap as IM
+
+type UInt = CUInt
+
+data WordSize
+  = Bits8
+  | Bits16
+  | Bits32
+  | Bits64
+  deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
+
+bitsInWord :: WordSize -> UInt
+bitsInWord Bits8  = 8
+bitsInWord Bits16 = 16
+bitsInWord Bits32 = 32
+bitsInWord Bits64 = 64
 
 data Register
   = RegNone
@@ -76,8 +97,50 @@ data XMMRegister
   | XMM12 | XMM13 | XMM14 | XMM15
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
-registers :: IM.IntMap Register
-registers = IM.fromList [
+data Instruction
+  = Inst [Prefix] Opcode [Operand]
+  deriving (Eq, Ord, Show, Typeable, Data)
+
+data Prefix
+  = Seg Segment
+  | Rex
+  | OperSize
+  | AddrSize
+  | Lock
+  | Rep
+  | RepE
+  | RepNE
+  deriving (Eq, Ord, Show, Typeable, Data)
+
+data Operand
+  = OpMem   Memory
+  | OpReg   Register
+  | OpPtr   Pointer
+  | OpImm   Immediate
+  | OpJump  Immediate
+  | OpConst Immediate
+  deriving (Eq, Ord, Show, Typeable, Data)
+
+data Memory = Memory
+  { mBase, mIndex :: Register
+  , mScale        :: Word8
+  , mOffsetSize   :: WordSize
+  , mOffset       :: Word64
+  } deriving (Eq, Ord, Show, Typeable, Data)
+
+data Pointer = Pointer
+  { pSegment    :: Word16
+  , pOffsetSize :: WordSize
+  , pOffset     :: Word32
+  } deriving (Eq, Ord, Show, Typeable, Data)
+
+data Immediate = Immediate
+  { iSize  :: WordSize
+  , iValue :: Word64
+  } deriving (Eq, Ord, Show, Typeable, Data)
+
+regMap :: IM.IntMap Register
+regMap = IM.fromList [
     (udNone, RegNone)
 
   , (udRAl,   Reg8 RAX L)
@@ -230,5 +293,8 @@ registers = IM.fromList [
 
   , (udRRip, RegIP)]
 
-getRegister :: Int -> Register
-getRegister n = fromMaybe RegNone $ IM.lookup n registers
+register :: Int -> Register
+register n = fromMaybe RegNone $ IM.lookup n regMap
+
+opcode :: Int -> Opcode
+opcode = toEnum
