@@ -20,6 +20,8 @@ library
     , Udis86.C
     , Udis86.Types
     , Udis86.IO
+    , Udis86.Pure
+      Udis86
   ghc-options:       -Wall
   build-depends:
       base       >= 3 && < 5
