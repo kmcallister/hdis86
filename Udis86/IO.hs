@@ -3,20 +3,39 @@
   , RecordWildCards
   , NamedFieldPuns
   , ViewPatterns #-}
+
+-- | Interface to the `udis86` disassembler.
+--
+-- The goal at this level of wrapping is to provide the
+-- maximum feature-set from the underlying C library,
+-- with the minimum of C-related headaches. Therefore,
+-- this module's API is thoroughly imperative, but uses
+-- Haskellish types and automatic resource management.
+--
+-- For a higher-level, @IO@-free API, see @'Udis86.Pure'@.
+
 module Udis86.IO
-  ( UD
+  ( -- * Instances
+    UD
   , newUD
+
+    -- * Input sources
   , setInputBuffer
   , InputHook, endOfInput, setInputHook
+
+    -- * Disassembly
+  , disassemble, skip, setIP
+
+    -- * Inspecting the output
+  , getInstruction
+  , getLength, getOffset
+  , getHex, getBytes, getAssembly
+
+    -- * Configuration
   , setWordSize
-  , setIP
   , setSyntaxNone, setSyntaxIntel, setSyntaxATT
   , setCallback
   , setVendorIntel, setVendorAMD
-  , disassemble, skip
-  , getLength, getOffset
-  , getHex, getBytes, getAssembly
-  , getInstruction
   ) where
 
 import Udis86.C
@@ -26,7 +45,7 @@ import Data.Typeable ( Typeable )
 import Control.Concurrent.MVar
 import Foreign
 import Foreign.C.String
-import Control.Applicative
+import Control.Applicative hiding ( Const )
 import Control.Monad
 import Data.Maybe
 import qualified Data.IntMap as IM
@@ -53,6 +72,7 @@ data State = State
   , udXlatType :: XlatType
   , udXlat     :: FunPtr CTranslator }
 
+-- | Abstract type representing an instance of the disassembler.
 newtype UD = UD (MVar State)
   deriving (Typeable)
 
@@ -60,7 +80,8 @@ setInput :: Input -> State -> IO State
 setInput inpt st@State{udInput} = do
   case udInput of
     InHook fp -> freeHaskellFunPtr fp
-    InBuf ptr -> touchForeignPtr ptr -- just in case
+    -- We make sure any ByteString's contents stay valid to this point
+    InBuf ptr -> touchForeignPtr ptr
     _ -> return ()
   return $ st { udInput = inpt }
 
@@ -78,6 +99,10 @@ finalizeState s = withMVar s $ \st@State{..} -> do
   _ <- setXlat  XlBuiltin nullFunPtr st
   free udPtr
 
+-- | Create a new disassembler instance.
+--
+-- There is no @deleteUD@.  Associated resources will be freed automatically
+-- when this @'UD'@ value becomes unreachable.
 newUD :: IO UD
 newUD = do
   p <- mallocBytes sizeof_ud_t
@@ -89,11 +114,17 @@ newUD = do
 withUDPtr :: UD -> (Ptr UD_t -> IO a) -> IO a
 withUDPtr (UD s) f = withMVar s $ \State{udPtr} -> f udPtr
 
+-- | A custom input source.
+--
+-- Each time this action is executed, it should return a single byte of
+-- input, or return @'endOfInput'@ if there are no more bytes to read.
 type InputHook = IO Int
 
+-- | Special value representing the end of input.
 endOfInput :: Int
 endOfInput = ud_eoi
 
+-- | Register an @'InputHook'@ to provide machine code to disassemble.
 setInputHook :: UD -> InputHook -> IO ()
 setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
   fp <- c_mkInputHook f
@@ -102,6 +133,9 @@ setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
 
 -- FIXME: setInputFile
 
+-- | Disassemble machine code from a @'ByteString'@.
+--
+-- This does not involve copying the contents.
 setInputBuffer :: UD -> BS.ByteString -> IO ()
 setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
   let (ptr, off, len) = BS.toForeignPtr bs
@@ -111,21 +145,39 @@ setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
   setInput (InBuf ptr) st
 
 -- TODO: error checking
+
+-- | Set the word size, i.e. whether to disassemble
+--   16-bit, 32-bit, or 64-bit code.
 setWordSize :: UD -> WordSize -> IO ()
+setWordSize _ Bits8 = error "no 8-bit disassembly mode"
 setWordSize s w = withUDPtr s $ flip ud_set_mode (fromIntegral $ bitsInWord w)
 
+-- | Set the instruction pointer, i.e. the disassembler's idea of
+-- where the current instruction would live in memory.
 setIP :: UD -> Word64 -> IO ()
 setIP s w = withUDPtr s $ flip ud_set_pc w
 
 setSyntax :: XlatType -> FunPtr CTranslator -> UD -> IO ()
 setSyntax ty fp (UD s) = modifyMVar_ s $ setXlat ty fp
 
-setSyntaxNone, setSyntaxIntel, setSyntaxATT :: UD -> IO ()
-setSyntaxNone  = setSyntax XlBuiltin nullFunPtr
+-- | Don't generate assembly text output.
+--
+-- @'getAssembly'@ will return the empty string.
+setSyntaxNone :: UD -> IO ()
+setSyntaxNone = setSyntax XlBuiltin nullFunPtr
+
+-- | Generate Intel- / NASM-like assembly syntax for the next instruction.
+setSyntaxIntel :: UD -> IO ()
 setSyntaxIntel = setSyntax XlBuiltin ud_translate_intel
-setSyntaxATT   = setSyntax XlBuiltin ud_translate_att
+
+-- | Generate AT&T- / @gas@-like assembly syntax for the next instruction.
+setSyntaxATT :: UD -> IO ()
+setSyntaxATT = setSyntax XlBuiltin ud_translate_att
 
 -- no point passing the UD since we can close over it easily
+-- | Register an action to be performed after each instruction is disassembled.
+--
+-- This disables updating of the string returned by `getAssembly`.
 setCallback :: UD -> IO () -> IO ()
 setCallback s act = do
   fp <- c_mkTranslator (const act)
@@ -134,23 +186,36 @@ setCallback s act = do
 setVendor :: UD_vendor -> UD -> IO ()
 setVendor v s = withUDPtr s $ flip ud_set_vendor v
 
-setVendorIntel, setVendorAMD :: UD -> IO ()
+-- | Disassemble code for Intel processors, where they differ from AMD processors.
+setVendorIntel :: UD -> IO ()
 setVendorIntel = setVendor udVendorIntel
+
+-- | Disassemble code for AMD processors, where they differ from Intel processors.
+setVendorAMD   :: UD -> IO ()
 setVendorAMD   = setVendor udVendorAmd
 
+-- | Disassemble the next instruction and return its length in bytes.
+--
+-- Returns zero if there are no more instructions.
 disassemble :: UD -> IO UInt
 disassemble = flip withUDPtr ud_disassemble
 
+-- | Get the length of the current instruction in bytes.
 getLength :: UD -> IO UInt
 getLength = flip withUDPtr ud_insn_len
 
+-- | Get the offset of the current instruction from FIXME.
 getOffset :: UD -> IO Word64
 getOffset = flip withUDPtr ud_insn_off
 
+-- | Get the current instruction's machine code as a hexadecimal string.
 getHex :: UD -> IO String
 getHex s = withUDPtr s $ \p ->
   ud_insn_hex p >>= peekCString
 
+-- | Get the current instruction's machine code as a @'ByteString'@.
+--
+-- The bytes are copied out of internal state.
 getBytes :: UD -> IO BS.ByteString
 getBytes s = withUDPtr s $ \p -> do
   len <- ud_insn_len p
@@ -158,10 +223,14 @@ getBytes s = withUDPtr s $ \p -> do
   -- Int vs. UInt overflow problems?
   BS.packCStringLen (castPtr ptr, fromIntegral len)
 
+-- | Get the assembly syntax for the current instruction.
+--
+-- See also @'setSyntaxIntel'@ and @'setSyntaxATT'@.
 getAssembly :: UD -> IO String
 getAssembly s = withUDPtr s $ \p ->
   ud_insn_asm p >>= peekCString
 
+-- | Skip the next /n/ bytes of the input.
 skip :: UD -> UInt -> IO ()
 skip s n = withUDPtr s $ flip ud_input_skip (fromIntegral n)
 
@@ -192,12 +261,12 @@ getLval Bits64 uop = get_lval64 uop
 
 opDecode :: IM.IntMap (Ptr UD_operand -> IO Operand)
 opDecode = IM.fromList
-  [ (udOpMem,   (OpMem   <$>) . getMem)
-  , (udOpReg,   (OpReg   <$>) . getReg get_base)
-  , (udOpPtr,   (OpPtr   <$>) . getPtr)
-  , (udOpImm,   (OpImm   <$>) . getImm)
-  , (udOpJimm,  (OpJump  <$>) . getImm)
-  , (udOpConst, (OpConst <$>) . getImm) ] where
+  [ (udOpMem,   (Mem   <$>) . getMem)
+  , (udOpReg,   (Reg   <$>) . getReg get_base)
+  , (udOpPtr,   (Ptr   <$>) . getPtr)
+  , (udOpImm,   (Imm   <$>) . getImm)
+  , (udOpJimm,  (Jump  <$>) . getImm)
+  , (udOpConst, (Const <$>) . getImm) ] where
 
     wordSize :: Word8 -> WordSize
     wordSize 8  = Bits8
@@ -240,6 +309,7 @@ getOperands udt = catMaybes <$> mapM decode getters where
       Just g  -> Just <$> g uop
       Nothing -> return Nothing
 
+-- | Get the current instruction.
 getInstruction :: UD -> IO Instruction
 getInstruction = flip withUDPtr $ \udt ->
   Inst <$> getPfx udt <*> (opcode <$> get_mnemonic udt) <*> getOperands udt

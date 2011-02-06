@@ -1,13 +1,25 @@
 {-# LANGUAGE
     DeriveDataTypeable #-}
+
+-- | Types provided by the disassembler.
 module Udis86.Types
-  ( UInt, WordSize(..), bitsInWord
-  , Operand(..), Memory(..), Pointer(..), Immediate(..)
-  , Prefix(..), Instruction(..)
-  , Register(..), GPR(..), Half(..)
+  ( -- * Integral types
+    UInt, WordSize(..), bitsInWord
+
+    -- * Instructions
+  , Instruction(..)
+  , Prefix(..)
+  , Operand(..), Memory(..), Register(..), Pointer(..), Immediate(..)
+
+    -- * Register types
+  , GPR(..), Half(..)
   , Segment(..), ControlRegister(..), DebugRegister(..)
   , MMXRegister(..), X87Register(..), XMMRegister(..)
+
+    -- * Opcodes
   , Opcode(..)
+
+    -- * For internal use
   , register, opcode
   ) where
 
@@ -22,8 +34,12 @@ import Foreign.C.Types ( CUInt )
 
 import qualified Data.IntMap as IM
 
+-- | Unsigned integer.
 type UInt = CUInt
 
+-- | Some fields, such as immediate operands, come in different
+--   widths.  We store the equivalent integer value in a @'Word64'@,
+--   along with a @'WordSize'@ to indicate the original width.
 data WordSize
   = Bits8
   | Bits16
@@ -31,27 +47,36 @@ data WordSize
   | Bits64
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
-bitsInWord :: WordSize -> UInt
+-- | Number of bits in a word of a given size.
+bitsInWord :: WordSize -> Int
 bitsInWord Bits8  = 8
 bitsInWord Bits16 = 16
 bitsInWord Bits32 = 32
 bitsInWord Bits64 = 64
 
+-- | An `x86` \/ `amd64` register.
 data Register
-  = RegNone
-  | Reg8   GPR Half
-  | Reg16  GPR
-  | Reg32  GPR
-  | Reg64  GPR
-  | RegSeg Segment
-  | RegCtl ControlRegister
-  | RegDbg DebugRegister
-  | RegMMX MMXRegister
-  | RegX87 X87Register
-  | RegXMM XMMRegister
-  | RegIP
+  = RegNone                 -- ^ No register specified.
+  | Reg8   GPR Half         -- ^ Either 8-bit half of the low 16 bits
+                            --   of a general-purpose register
+  | Reg16  GPR              -- ^ Low 16 bits of a general-purpose register
+                            --   (full register in 16-bit mode)
+  | Reg32  GPR              -- ^ Low 32 bits of a general-purpose register
+                            --   (full register in 32-bit mode)
+  | Reg64  GPR              -- ^ Full 64-bit general-purpose register
+  | RegSeg Segment          -- ^ Segment register
+  | RegCtl ControlRegister  -- ^ Control register
+  | RegDbg DebugRegister    -- ^ Debug register
+  | RegMMX MMXRegister      -- ^ MMX register
+  | RegX87 X87Register      -- ^ @x87@ floating point unit register
+  | RegXMM XMMRegister      -- ^ XMM register
+  | RegIP                   -- ^ Instruction pointer
   deriving (Eq, Ord, Show, Typeable, Data)
 
+-- | A general-purpose register.
+--
+-- Names taken from the 64-bit architecture, but they map onto
+-- other modes in the obvious way.
 data GPR
   = RAX | RCX | RDX | RBX
   | RSP | RBP | RSI | RDI
@@ -59,13 +84,18 @@ data GPR
   | R12 | R13 | R14 | R15
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
-data Half = L | H
+-- | Indicates which half of a 16-bit register is used as an 8-bit register.
+data Half
+  = L  -- ^ Low or least significant 8 bits
+  | H  -- ^ High or most significant 8 bits
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
+-- | A segment register.
 data Segment
   = ES | CS | SS | DS | FS | GS
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
+-- | A control register.
 data ControlRegister
   = CR0  | CR1  | CR2  | CR3
   | CR4  | CR5  | CR6  | CR7
@@ -73,6 +103,7 @@ data ControlRegister
   | CR12 | CR13 | CR14 | CR15
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
+-- | A debug register.
 data DebugRegister
   = DR0  | DR1  | DR2  | DR3
   | DR4  | DR5  | DR6  | DR7
@@ -80,16 +111,19 @@ data DebugRegister
   | DR12 | DR13 | DR14 | DR15
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
+-- | An MMX register.
 data MMXRegister
   = MM0  | MM1  | MM2  | MM3
   | MM4  | MM5  | MM6  | MM7
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
+-- | An @x87@ floating-point unit register.
 data X87Register
   = ST0  | ST1  | ST2  | ST3
   | ST4  | ST5  | ST6  | ST7
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
+-- | An XMM register.
 data XMMRegister
   = XMM0  | XMM1  | XMM2  | XMM3
   | XMM4  | XMM5  | XMM6  | XMM7
@@ -97,46 +131,53 @@ data XMMRegister
   | XMM12 | XMM13 | XMM14 | XMM15
   deriving (Eq, Ord, Show, Typeable, Data, Enum, Bounded)
 
+-- | An `x86` \/ `amd64` CPU instruction.
 data Instruction
   = Inst [Prefix] Opcode [Operand]
   deriving (Eq, Ord, Show, Typeable, Data)
 
+-- | Prefixes, used to modify an instruction.
 data Prefix
-  = Seg Segment
-  | Rex
-  | OperSize
-  | AddrSize
-  | Lock
-  | Rep
-  | RepE
-  | RepNE
+  = Seg Segment  -- ^ Segment override
+  | Rex          -- ^ `REX` prefix; enables certain 64-bit features
+  | OperSize     -- ^ Operand size override
+  | AddrSize     -- ^ Address size override
+  | Lock         -- ^ Perform memory operations atomically
+  | Rep          -- ^ Repeat
+  | RepE         -- ^ Repeat while equal
+  | RepNE        -- ^ Repeat while not equal
   deriving (Eq, Ord, Show, Typeable, Data)
 
+-- | Instruction operands.
 data Operand
-  = OpMem   Memory
-  | OpReg   Register
-  | OpPtr   Pointer
-  | OpImm   Immediate
-  | OpJump  Immediate
-  | OpConst Immediate
+  = Mem   Memory     -- ^ Memory access
+  | Reg   Register   -- ^ Register
+  | Ptr   Pointer    -- ^ Pointer (segment:offset)
+  | Imm   Immediate  -- ^ Immediate value
+  | Jump  Immediate  -- ^ Immediate value, for branch instructions
+  | Const Immediate  -- ^ Constant value
   deriving (Eq, Ord, Show, Typeable, Data)
 
+-- | A memory-access operand.
 data Memory = Memory
-  { mBase, mIndex :: Register
-  , mScale        :: Word8
-  , mOffsetSize   :: WordSize
-  , mOffset       :: Word64
+  { mBase         :: Register  -- ^ Base register
+  , mIndex        :: Register  -- ^ Index register
+  , mScale        :: Word8     -- ^ Scale of index
+  , mOffsetSize   :: WordSize  -- ^ Size of displacement / offset field
+  , mOffset       :: Word64    -- ^ Displacement / offset value
   } deriving (Eq, Ord, Show, Typeable, Data)
 
+-- | A segmented pointer operand.
 data Pointer = Pointer
-  { pSegment    :: Word16
-  , pOffsetSize :: WordSize
-  , pOffset     :: Word32
+  { pSegment    :: Word16    -- ^ Segment
+  , pOffsetSize :: WordSize  -- ^ Size of offset (@'Bits16'@ or @'Bits32'@)
+  , pOffset     :: Word32    -- ^ Offset
   } deriving (Eq, Ord, Show, Typeable, Data)
 
+-- | An immediate operand.
 data Immediate = Immediate
-  { iSize  :: WordSize
-  , iValue :: Word64
+  { iSize  :: WordSize  -- ^ Size of the field
+  , iValue :: Word64    -- ^ Immediate value
   } deriving (Eq, Ord, Show, Typeable, Data)
 
 regMap :: IM.IntMap Register
@@ -293,8 +334,10 @@ regMap = IM.fromList [
 
   , (udRRip, RegIP)]
 
+-- | Translate `udis86` internal register numbers.
 register :: Int -> Register
 register n = fromMaybe RegNone $ IM.lookup n regMap
 
+-- | Translate `udis86` internal opcode numbers.
 opcode :: Int -> Opcode
 opcode = toEnum

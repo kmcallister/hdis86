@@ -2,6 +2,17 @@
     ForeignFunctionInterface
   , EmptyDataDecls #-}
 
+-- | Bare import of the @udis86@ C library.
+--
+-- You may instead be looking for @'Udis86.IO'@ or @'Udis86.Pure'@.
+--
+-- This module is not recommended for most users. What you see is what you get.
+-- If you want to use this, see the @udis86@ documentation: <http://udis86.sourceforge.net>
+--
+-- Instruction opcodes are not enumerated here. You can convert between the
+-- C-level integer codes and the type @'Udis86.Types.Opcode'@ using the latter's
+-- @'Enum'@ instance.
+
 module Udis86.C where
 
 import Foreign
@@ -10,11 +21,15 @@ import Control.Monad ( liftM2 )
 
 #include <udis86.h>
 
+-- * The type `ud_t`
 
+-- | Just a pointer tag, with no Haskell representation.
 data UD_t
 
 sizeof_ud_t :: Int
 sizeof_ud_t = (#size ud_t)
+
+-- * Callbacks
 
 type CInputHook = IO Int
 type CTranslator = Ptr UD_t -> IO ()
@@ -28,6 +43,7 @@ foreign import ccall "wrapper"
 ud_eoi :: Int
 ud_eoi = (#const UD_EOI)
 
+-- * Imported functions
 
 foreign import ccall "ud_init"
   ud_init :: Ptr UD_t -> IO ()
@@ -80,10 +96,12 @@ foreign import ccall "&ud_translate_intel"
 foreign import ccall "&ud_translate_att"
   ud_translate_att :: FunPtr CTranslator
 
+-- * Struct accessors
 
 get_mnemonic :: Ptr UD_t -> IO Int
 get_mnemonic p = (#peek struct ud, mnemonic) p
 
+-- | Another pointer tag.
 data UD_operand
 
 get_operand1, get_operand2, get_operand3 :: Ptr UD_t -> Ptr UD_operand
@@ -127,6 +145,7 @@ get_pfx_repne = (#peek ud_t, pfx_repne)
 get_pc :: Ptr UD_t -> IO (#type uint64_t)
 get_pc = (#peek ud_t, pc)
 
+-- * Enumerations
 
 type UD_vendor = CUInt
 #enum UD_vendor,, UD_VENDOR_INTEL, UD_VENDOR_AMD
