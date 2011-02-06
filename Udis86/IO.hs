@@ -33,9 +33,9 @@ module Udis86.IO
 
     -- * Configuration
   , setWordSize
-  , setSyntaxNone, setSyntaxIntel, setSyntaxATT
+  , setSyntax
+  , setVendor
   , setCallback
-  , setVendorIntel, setVendorAMD
   ) where
 
 import Udis86.C
@@ -157,42 +157,29 @@ setWordSize s w = withUDPtr s $ flip ud_set_mode (fromIntegral $ bitsInWord w)
 setIP :: UD -> Word64 -> IO ()
 setIP s w = withUDPtr s $ flip ud_set_pc w
 
-setSyntax :: XlatType -> FunPtr CTranslator -> UD -> IO ()
-setSyntax ty fp (UD s) = modifyMVar_ s $ setXlat ty fp
-
--- | Don't generate assembly text output.
+-- | Set the assembly syntax to be used by @'getAssembly'@.
 --
--- @'getAssembly'@ will return the empty string.
-setSyntaxNone :: UD -> IO ()
-setSyntaxNone = setSyntax XlBuiltin nullFunPtr
-
--- | Generate Intel- / NASM-like assembly syntax for the next instruction.
-setSyntaxIntel :: UD -> IO ()
-setSyntaxIntel = setSyntax XlBuiltin ud_translate_intel
-
--- | Generate AT&T- / @gas@-like assembly syntax for the next instruction.
-setSyntaxATT :: UD -> IO ()
-setSyntaxATT = setSyntax XlBuiltin ud_translate_att
+-- This takes effect after the next call to @'disassemble'@.
+setSyntax :: UD -> Syntax -> IO ()
+setSyntax (UD s) = modifyMVar_ s . setXlat XlBuiltin . f where
+  f SyntaxNone  = nullFunPtr
+  f SyntaxIntel = ud_translate_intel
+  f SyntaxATT   = ud_translate_att
 
 -- no point passing the UD since we can close over it easily
 -- | Register an action to be performed after each instruction is disassembled.
 --
 -- This disables updating of the string returned by `getAssembly`.
 setCallback :: UD -> IO () -> IO ()
-setCallback s act = do
+setCallback (UD s) act = do
   fp <- c_mkTranslator (const act)
-  setSyntax XlCustom fp s
+  modifyMVar_ s $ setXlat XlCustom fp
 
-setVendor :: UD_vendor -> UD -> IO ()
-setVendor v s = withUDPtr s $ flip ud_set_vendor v
-
--- | Disassemble code for Intel processors, where they differ from AMD processors.
-setVendorIntel :: UD -> IO ()
-setVendorIntel = setVendor udVendorIntel
-
--- | Disassemble code for AMD processors, where they differ from Intel processors.
-setVendorAMD   :: UD -> IO ()
-setVendorAMD   = setVendor udVendorAmd
+-- | Choose an instruction set variation.
+setVendor :: UD -> Vendor -> IO ()
+setVendor ud = withUDPtr ud . flip ud_set_vendor . f where
+  f Intel = udVendorIntel
+  f AMD   = udVendorAmd
 
 -- | Disassemble the next instruction and return its length in bytes.
 --
@@ -225,7 +212,7 @@ getBytes s = withUDPtr s $ \p -> do
 
 -- | Get the assembly syntax for the current instruction.
 --
--- See also @'setSyntaxIntel'@ and @'setSyntaxATT'@.
+-- See also @'setSyntax'@.
 getAssembly :: UD -> IO String
 getAssembly s = withUDPtr s $ \p ->
   ud_insn_asm p >>= peekCString

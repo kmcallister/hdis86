@@ -16,7 +16,7 @@ module Udis86.Pure
   , Metadata(..)
 
     -- * Configuration
-  , Config(..), Vendor(..), Syntax(..)
+  , Config(..)
 
     -- * Common configurations
   , intel32, intel64, amd32, amd64
@@ -41,21 +41,8 @@ import qualified Data.ByteString as BS
 data Config = Config
   { cfgVendor   :: Vendor    -- ^ CPU vendor
   , cfgWordSize :: WordSize  -- ^ Disassemble 16-, 32-, or 64-bit code
-  , cfgSyntax   :: Syntax    -- ^ When generating assembly, use this syntax
+  , cfgSyntax   :: Syntax    -- ^ Syntax to use when generating assembly
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
-
--- | CPU vendors and their associated instruction-set variations.
-data Vendor
-  = Intel
-  | AMD
-  deriving (Eq, Ord, Show, Read, Enum, Bounded, Typeable, Data)
-
--- | Selection of assembly output syntax.
-data Syntax
-  = SyntaxNone   -- ^ Don't generate assembly syntax
-  | SyntaxIntel  -- ^ Intel- / NASM-like syntax
-  | SyntaxATT    -- ^ AT&T- / @gas@-like syntax
-  deriving (Eq, Ord, Show, Read, Enum, Bounded, Typeable, Data)
 
 intel32, intel64, amd32, amd64 :: Config
 intel32 = Config Intel Bits32 SyntaxNone
@@ -75,14 +62,9 @@ disWith :: (UD -> IO a) -> Config -> BS.ByteString -> [a]
 disWith get Config{..} bs = unsafePerformIO $ do
   ud <- I.newUD
   I.setInputBuffer ud bs
-  case cfgVendor of
-    Intel -> I.setVendorIntel ud
-    AMD   -> I.setVendorAMD   ud
+  I.setVendor   ud cfgVendor
   I.setWordSize ud cfgWordSize
-  case cfgSyntax of
-    SyntaxNone  -> I.setSyntaxNone  ud
-    SyntaxIntel -> I.setSyntaxIntel ud
-    SyntaxATT   -> I.setSyntaxATT   ud
+  I.setSyntax   ud cfgSyntax
   runWith get ud
 
 -- | Disassemble machine code.

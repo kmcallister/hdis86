@@ -16,6 +16,9 @@ module Udis86.Types
     -- * Word sizes
   , WordSize(..), bitsInWord
 
+    -- * Configuration
+  , Vendor(..), Syntax(..)
+
     -- * Opcodes
   , Opcode(..)
 
@@ -175,6 +178,19 @@ data Immediate = Immediate
   { iSize  :: WordSize  -- ^ Size of the field
   , iValue :: Word64    -- ^ Immediate value
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
+
+-- | CPU vendors, supporting slightly different instruction sets.
+data Vendor
+  = Intel
+  | AMD
+  deriving (Eq, Ord, Show, Read, Enum, Bounded, Typeable, Data)
+
+-- | Selection of assembly output syntax.
+data Syntax
+  = SyntaxNone   -- ^ Don't generate assembly syntax
+  | SyntaxIntel  -- ^ Intel- / NASM-like syntax
+  | SyntaxATT    -- ^ AT&T- / @gas@-like syntax
+  deriving (Eq, Ord, Show, Read, Enum, Bounded, Typeable, Data)
 
 regMap :: IM.IntMap Register
 regMap = IM.fromList [
