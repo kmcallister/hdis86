@@ -37,21 +37,24 @@ import System.IO.Unsafe ( unsafePerformIO )
 
 import qualified Data.ByteString as BS
 
+-- | Configuration of the disassembler
 data Config = Config
   { cfgVendor   :: Vendor    -- ^ CPU vendor
   , cfgWordSize :: WordSize  -- ^ Disassemble 16-, 32-, or 64-bit code
-  , cfgSyntax   :: Syntax    -- ^ When generating text, the syntax to use
+  , cfgSyntax   :: Syntax    -- ^ When generating assembly, use this syntax
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
+-- | CPU vendors and their associated instruction-set variations.
 data Vendor
   = Intel
   | AMD
   deriving (Eq, Ord, Show, Read, Enum, Bounded, Typeable, Data)
 
+-- | Selection of assembly output syntax.
 data Syntax
-  = SyntaxNone
-  | SyntaxIntel
-  | SyntaxATT
+  = SyntaxNone   -- ^ Don't generate assembly syntax
+  | SyntaxIntel  -- ^ Intel- / NASM-like syntax
+  | SyntaxATT    -- ^ AT&T- / @gas@-like syntax
   deriving (Eq, Ord, Show, Read, Enum, Bounded, Typeable, Data)
 
 intel32, intel64, amd32, amd64 :: Config
@@ -88,12 +91,12 @@ disassemble = disWith I.getInstruction
 
 -- | An instruction with full metadata.
 data Metadata = Metadata
-  { mdOffset   :: Word64
-  , mdLength   :: Word
-  , mdHex      :: String
-  , mdBytes    :: BS.ByteString
-  , mdAssembly :: String
-  , mdInst     :: Instruction
+  { mdOffset   :: Word64         -- ^ Offset of the start of this instruction
+  , mdLength   :: Word           -- ^ Length of this instruction in bytes
+  , mdHex      :: String         -- ^ Hexadecimal representation of this instruction
+  , mdBytes    :: BS.ByteString  -- ^ Bytes that make up this instruction
+  , mdAssembly :: String         -- ^ Assembly syntax for this instruction
+  , mdInst     :: Instruction    -- ^ The instruction itself
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | Disassemble machine code, with full metadata.
