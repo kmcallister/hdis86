@@ -31,7 +31,7 @@ sizeof_ud_t = (#size ud_t)
 
 -- * Callbacks
 
-type CInputHook = IO Int
+type CInputHook = IO CInt
 type CTranslator = Ptr UD_t -> IO ()
 
 foreign import ccall "wrapper"
@@ -40,7 +40,7 @@ foreign import ccall "wrapper"
 foreign import ccall "wrapper"
   c_mkTranslator :: CTranslator -> IO (FunPtr CTranslator)
 
-ud_eoi :: Int
+ud_eoi :: CInt
 ud_eoi = (#const UD_EOI)
 
 -- * Imported functions
@@ -98,7 +98,7 @@ foreign import ccall "&ud_translate_att"
 
 -- * Struct accessors
 
-get_mnemonic :: Ptr UD_t -> IO Int
+get_mnemonic :: Ptr UD_t -> IO CUInt
 get_mnemonic p = (#peek struct ud, mnemonic) p
 
 -- | Another pointer tag.
@@ -150,7 +150,7 @@ get_pc = (#peek ud_t, pc)
 type UD_vendor = CUInt
 #enum UD_vendor,, UD_VENDOR_INTEL, UD_VENDOR_AMD
 
-type UD_type = Int
+type UD_type = CUInt
 #{enum UD_type,,
   UD_NONE,
   UD_R_AL,      UD_R_CL,        UD_R_DL,        UD_R_BL,

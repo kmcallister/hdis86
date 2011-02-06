@@ -23,6 +23,7 @@ module Udis86.Types
   , Opcode(..)
 
     -- * For internal use
+  , UDTM, makeUDTM, lookupUDTM
   , register, opcode
   ) where
 
@@ -33,6 +34,8 @@ import Data.Typeable ( Typeable )
 import Data.Data     ( Data )
 import Data.Maybe
 import Data.Word
+
+import Foreign.C.Types ( CUInt )
 
 import qualified Data.IntMap as IM
 
@@ -192,9 +195,17 @@ data Syntax
   | SyntaxATT    -- ^ AT&T- / @gas@-like syntax
   deriving (Eq, Ord, Show, Read, Enum, Bounded, Typeable, Data)
 
-regMap :: IM.IntMap Register
-regMap = IM.fromList [
-    (udNone, RegNone)
+newtype UDTM v = UDTM (IM.IntMap v)
+
+makeUDTM :: [(UD_type, v)] -> UDTM v
+makeUDTM = UDTM . IM.fromList . map (\(k,v) -> (fromIntegral k, v))
+
+lookupUDTM :: UD_type -> UDTM v -> Maybe v
+lookupUDTM t (UDTM m) = IM.lookup (fromIntegral t) m
+
+regMap :: UDTM Register
+regMap = makeUDTM
+  [ (udNone, RegNone)
 
   , (udRAl,   Reg8 RAX L)
   , (udRCl,   Reg8 RCX L)
@@ -347,9 +358,9 @@ regMap = IM.fromList [
   , (udRRip, RegIP)]
 
 -- | Translate `udis86` internal register numbers.
-register :: Int -> Register
-register n = fromMaybe RegNone $ IM.lookup n regMap
+register :: CUInt -> Register
+register n = fromMaybe RegNone $ lookupUDTM n regMap
 
 -- | Translate `udis86` internal opcode numbers.
-opcode :: Int -> Opcode
-opcode = toEnum
+opcode :: CUInt -> Opcode
+opcode = toEnum . fromIntegral

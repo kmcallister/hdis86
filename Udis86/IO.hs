@@ -48,7 +48,6 @@ import Foreign.C.String
 import Control.Applicative hiding ( Const )
 import Control.Monad
 import Data.Maybe
-import qualified Data.IntMap as IM
 
 import qualified Data.ByteString          as BS
 import qualified Data.ByteString.Internal as BS
@@ -122,12 +121,12 @@ type InputHook = IO Int
 
 -- | Special value representing the end of input.
 endOfInput :: Int
-endOfInput = ud_eoi
+endOfInput = fromIntegral ud_eoi
 
 -- | Register an @'InputHook'@ to provide machine code to disassemble.
 setInputHook :: UD -> InputHook -> IO ()
 setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
-  fp <- c_mkInputHook f
+  fp <- c_mkInputHook (fromIntegral <$> f)
   ud_set_input_hook udPtr fp
   setInput (InHook fp) st
 
@@ -246,8 +245,8 @@ getLval Bits16 uop = fromIntegral <$> get_lval16 uop
 getLval Bits32 uop = fromIntegral <$> get_lval32 uop
 getLval Bits64 uop = get_lval64 uop
 
-opDecode :: IM.IntMap (Ptr UD_operand -> IO Operand)
-opDecode = IM.fromList
+opDecode :: UDTM (Ptr UD_operand -> IO Operand)
+opDecode = makeUDTM
   [ (udOpMem,   (Mem   <$>) . getMem)
   , (udOpReg,   (Reg   <$>) . getReg get_base)
   , (udOpPtr,   (Ptr   <$>) . getPtr)
@@ -292,7 +291,7 @@ getOperands udt = catMaybes <$> mapM decode getters where
   decode f = do
     let uop = f udt
     ty  <- get_type uop
-    case IM.lookup ty opDecode of
+    case lookupUDTM ty opDecode of
       Just g  -> Just <$> g uop
       Nothing -> return Nothing
 
