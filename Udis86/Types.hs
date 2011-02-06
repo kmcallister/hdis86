@@ -48,7 +48,8 @@ import qualified Data.IntMap as IM
 --   widths.  We store the equivalent integer value in a @'Word64'@,
 --   along with a @'WordSize'@ to indicate the original width.
 data WordSize
-  = Bits8
+  = Bits0   -- ^ Field not present, value will be 0
+  | Bits8
   | Bits16
   | Bits32
   | Bits64
@@ -56,6 +57,7 @@ data WordSize
 
 -- | Number of bits in a word of a given size.
 bitsInWord :: WordSize -> Int
+bitsInWord Bits0  = 0
 bitsInWord Bits8  = 8
 bitsInWord Bits16 = 16
 bitsInWord Bits32 = 32

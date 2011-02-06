@@ -154,6 +154,7 @@ setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
 -- | Set the word size, i.e. whether to disassemble
 --   16-bit, 32-bit, or 64-bit code.
 setWordSize :: UD -> WordSize -> IO ()
+setWordSize _ Bits0 = error "no 0-bit disassembly mode"
 setWordSize _ Bits8 = error "no 8-bit disassembly mode"
 setWordSize s w = withUDPtr s $ flip ud_set_mode (fromIntegral $ bitsInWord w)
 
@@ -256,12 +257,14 @@ getPfx udt = catMaybes <$> mapM get allPfx where
   k v _ = Just v
 
 getLvalU :: WordSize -> Ptr UD_operand -> IO Word64
+getLvalU Bits0  _   = return 0
 getLvalU Bits8  uop = fromIntegral <$> get_lval_u8  uop
 getLvalU Bits16 uop = fromIntegral <$> get_lval_u16 uop
 getLvalU Bits32 uop = fromIntegral <$> get_lval_u32 uop
 getLvalU Bits64 uop = get_lval_u64 uop
 
 getLvalS :: WordSize -> Ptr UD_operand -> IO Int64
+getLvalS Bits0  _   = return 0
 getLvalS Bits8  uop = fromIntegral <$> get_lval_s8  uop
 getLvalS Bits16 uop = fromIntegral <$> get_lval_s16 uop
 getLvalS Bits32 uop = fromIntegral <$> get_lval_s32 uop
@@ -277,6 +280,7 @@ opDecode = makeUDTM
   , (udOpConst, (Const <$>) . getImm getLvalU) ] where
 
     wordSize :: Word8 -> WordSize
+    wordSize 0  = Bits0
     wordSize 8  = Bits8
     wordSize 16 = Bits16
     wordSize 32 = Bits32
