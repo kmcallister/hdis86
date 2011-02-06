@@ -29,7 +29,6 @@ import qualified Udis86.IO as I
 import Data.Typeable ( Typeable )
 import Data.Data     ( Data )
 
-import Control.Monad
 import Control.Applicative
 import Data.Word
 
@@ -39,23 +38,24 @@ import qualified Data.ByteString as BS
 
 -- | Configuration of the disassembler
 data Config = Config
-  { cfgVendor   :: Vendor    -- ^ CPU vendor
+  { cfgVendor   :: Vendor    -- ^ CPU vendor; determines the instruction set used
   , cfgWordSize :: WordSize  -- ^ Disassemble 16-, 32-, or 64-bit code
   , cfgSyntax   :: Syntax    -- ^ Syntax to use when generating assembly
+  , cfgOrigin   :: Word64    -- ^ Address where the first instruction would live in memory
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 intel32, intel64, amd32, amd64 :: Config
-intel32 = Config Intel Bits32 SyntaxNone
-intel64 = Config Intel Bits64 SyntaxNone
-amd32   = Config AMD   Bits32 SyntaxNone
-amd64   = Config AMD   Bits64 SyntaxNone
+intel32 = Config Intel Bits32 SyntaxNone 0
+intel64 = Config Intel Bits64 SyntaxNone 0
+amd32   = Config AMD   Bits32 SyntaxNone 0
+amd64   = Config AMD   Bits64 SyntaxNone 0
 
 runWith :: (UD -> IO a) -> UD -> IO [a]
 runWith get s = go where
   go = do
     n <- I.disassemble s
     if n > 0
-      then liftM2 (:) (get s) go
+      then liftA2 (:) (get s) go
       else return []
 
 disWith :: (UD -> IO a) -> Config -> BS.ByteString -> [a]
@@ -65,6 +65,7 @@ disWith get Config{..} bs = unsafePerformIO $ do
   I.setVendor   ud cfgVendor
   I.setWordSize ud cfgWordSize
   I.setSyntax   ud cfgSyntax
+  I.setIP       ud cfgOrigin
   runWith get ud
 
 -- | Disassemble machine code.
@@ -77,7 +78,7 @@ data Metadata = Metadata
   , mdLength   :: Word           -- ^ Length of this instruction in bytes
   , mdHex      :: String         -- ^ Hexadecimal representation of this instruction
   , mdBytes    :: BS.ByteString  -- ^ Bytes that make up this instruction
-  , mdAssembly :: String         -- ^ Assembly syntax for this instruction
+  , mdAssembly :: String         -- ^ Assembly code for this instruction
   , mdInst     :: Instruction    -- ^ The instruction itself
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
