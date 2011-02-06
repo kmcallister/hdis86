@@ -5,7 +5,7 @@
   , ViewPatterns #-}
 module Udis86.IO
   ( UD
-  , init
+  , newUD
   , setInputBuffer
   , InputHook, endOfInput, setInputHook
   , setWordSize
@@ -23,7 +23,6 @@ import Udis86.C
 import Udis86.Types
 
 import Data.Typeable ( Typeable )
-import Prelude hiding ( init )
 import Control.Concurrent.MVar
 import Foreign
 import Foreign.C.String
@@ -79,8 +78,8 @@ finalizeState s = withMVar s $ \st@State{..} -> do
   _ <- setXlat  XlBuiltin nullFunPtr st
   free udPtr
 
-init :: IO UD
-init = do
+newUD :: IO UD
+newUD = do
   p <- mallocBytes sizeof_ud_t
   ud_init p
   s <- newMVar $ State p InNone XlBuiltin nullFunPtr
