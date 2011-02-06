@@ -239,20 +239,26 @@ getPfx udt = catMaybes <$> mapM get allPfx where
   getSeg _ = Nothing
   k v _ = Just v
 
-getLval :: WordSize -> Ptr UD_operand -> IO Word64
-getLval Bits8  uop = fromIntegral <$> get_lval8  uop
-getLval Bits16 uop = fromIntegral <$> get_lval16 uop
-getLval Bits32 uop = fromIntegral <$> get_lval32 uop
-getLval Bits64 uop = get_lval64 uop
+getLvalU :: WordSize -> Ptr UD_operand -> IO Word64
+getLvalU Bits8  uop = fromIntegral <$> get_lval_u8  uop
+getLvalU Bits16 uop = fromIntegral <$> get_lval_u16 uop
+getLvalU Bits32 uop = fromIntegral <$> get_lval_u32 uop
+getLvalU Bits64 uop = get_lval_u64 uop
+
+getLvalS :: WordSize -> Ptr UD_operand -> IO Int64
+getLvalS Bits8  uop = fromIntegral <$> get_lval_s8  uop
+getLvalS Bits16 uop = fromIntegral <$> get_lval_s16 uop
+getLvalS Bits32 uop = fromIntegral <$> get_lval_s32 uop
+getLvalS Bits64 uop = get_lval_s64 uop
 
 opDecode :: UDTM (Ptr UD_operand -> IO Operand)
 opDecode = makeUDTM
   [ (udOpMem,   (Mem   <$>) . getMem)
   , (udOpReg,   (Reg   <$>) . getReg get_base)
   , (udOpPtr,   (Ptr   <$>) . getPtr)
-  , (udOpImm,   (Imm   <$>) . getImm)
-  , (udOpJimm,  (Jump  <$>) . getImm)
-  , (udOpConst, (Const <$>) . getImm) ] where
+  , (udOpImm,   (Imm   <$>) . getImm getLvalU)
+  , (udOpJimm,  (Jump  <$>) . getImm getLvalS)
+  , (udOpConst, (Const <$>) . getImm getLvalU) ] where
 
     wordSize :: Word8 -> WordSize
     wordSize 8  = Bits8
@@ -264,13 +270,13 @@ opDecode = makeUDTM
     getReg f uop = register <$> f uop
 
     getMem uop = do
-      sz <- wordSize <$> get_size uop
+      sz <- wordSize <$> get_offset uop
       Memory
         <$> getReg get_base  uop
         <*> getReg get_index uop
         <*> get_scale uop
         <*> return sz
-        <*> getLval sz uop
+        <*> getLvalS sz uop
 
     getPtr uop = do
       sz <- get_size uop
@@ -280,9 +286,9 @@ opDecode = makeUDTM
         48 -> Pointer seg Bits32 off
         _  -> error ("invaild pointer size " ++ show sz)
 
-    getImm uop = do
+    getImm f uop = do
       sz  <- wordSize <$> get_size uop
-      val <- getLval sz uop
+      val <- f sz uop
       return $ Immediate sz val
 
 getOperands :: Ptr UD_t -> IO [Operand]

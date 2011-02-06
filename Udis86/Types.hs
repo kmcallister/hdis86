@@ -34,6 +34,7 @@ import Data.Typeable ( Typeable )
 import Data.Data     ( Data )
 import Data.Maybe
 import Data.Word
+import Data.Int
 
 import Foreign.C.Types ( CUInt )
 
@@ -152,12 +153,12 @@ data Prefix
 
 -- | Instruction operands.
 data Operand
-  = Mem   Memory     -- ^ Memory access
-  | Reg   Register   -- ^ Register
-  | Ptr   Pointer    -- ^ Pointer (segment:offset)
-  | Imm   Immediate  -- ^ Immediate value
-  | Jump  Immediate  -- ^ Immediate value, for branch instructions
-  | Const Immediate  -- ^ Constant value
+  = Mem   Memory              -- ^ Memory access
+  | Reg   Register            -- ^ Register
+  | Ptr   Pointer             -- ^ Pointer (segment:offset)
+  | Imm   (Immediate Word64)  -- ^ Immediate value
+  | Jump  (Immediate Int64 )  -- ^ Immediate value, for a relative jump
+  | Const (Immediate Word64)  -- ^ Constant value
   deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | A memory-access operand.
@@ -166,7 +167,7 @@ data Memory = Memory
   , mIndex        :: Register  -- ^ Index register
   , mScale        :: Word8     -- ^ Scale of index
   , mOffsetSize   :: WordSize  -- ^ Size of displacement / offset field
-  , mOffset       :: Word64    -- ^ Displacement / offset value
+  , mOffset       :: Int64     -- ^ Displacement / offset value
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | A segmented pointer operand.
@@ -177,9 +178,9 @@ data Pointer = Pointer
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | An immediate operand.
-data Immediate = Immediate
+data Immediate t = Immediate
   { iSize  :: WordSize  -- ^ Size of the field
-  , iValue :: Word64    -- ^ Immediate value
+  , iValue :: t         -- ^ Immediate value, e.g @'Int64'@ or @'Word64'@
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | CPU vendors, supporting slightly different instruction sets.

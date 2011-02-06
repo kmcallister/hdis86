@@ -119,14 +119,24 @@ get_size   = (#peek struct ud_operand, size)
 get_offset = (#peek struct ud_operand, offset)
 get_scale  = (#peek struct ud_operand, scale)
 
-get_lval8  :: Ptr UD_operand -> IO Word8
-get_lval8  = (#peek struct ud_operand, lval)
-get_lval16 :: Ptr UD_operand -> IO Word16
-get_lval16 = (#peek struct ud_operand, lval)
-get_lval32 :: Ptr UD_operand -> IO Word32
-get_lval32 = (#peek struct ud_operand, lval)
-get_lval64 :: Ptr UD_operand -> IO Word64
-get_lval64 = (#peek struct ud_operand, lval)
+get_lval_u8  :: Ptr UD_operand -> IO Word8
+get_lval_u8  = (#peek struct ud_operand, lval)
+get_lval_u16 :: Ptr UD_operand -> IO Word16
+get_lval_u16 = (#peek struct ud_operand, lval)
+get_lval_u32 :: Ptr UD_operand -> IO Word32
+get_lval_u32 = (#peek struct ud_operand, lval)
+get_lval_u64 :: Ptr UD_operand -> IO Word64
+get_lval_u64 = (#peek struct ud_operand, lval)
+
+get_lval_s8  :: Ptr UD_operand -> IO Int8
+get_lval_s8  = (#peek struct ud_operand, lval)
+get_lval_s16 :: Ptr UD_operand -> IO Int16
+get_lval_s16 = (#peek struct ud_operand, lval)
+get_lval_s32 :: Ptr UD_operand -> IO Int32
+get_lval_s32 = (#peek struct ud_operand, lval)
+get_lval_s64 :: Ptr UD_operand -> IO Int64
+get_lval_s64 = (#peek struct ud_operand, lval)
+
 get_lval_ptr :: Ptr UD_operand -> IO (Word16, Word32)
 get_lval_ptr p = liftM2 (,) ((#peek struct ud_operand, lval.ptr.seg) p)
                             ((#peek struct ud_operand, lval.ptr.off) p)
