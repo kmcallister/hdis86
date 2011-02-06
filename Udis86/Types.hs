@@ -6,10 +6,10 @@ module Udis86.Types
   (  -- * Instructions
     Instruction(..)
   , Prefix(..)
-  , Operand(..), Memory(..), Register(..), Pointer(..), Immediate(..)
+  , Operand(..), Memory(..), Pointer(..), Immediate(..)
 
-    -- * Register types
-  , GPR(..), Half(..)
+    -- * Registers
+  , Register(..), GPR(..), Half(..)
   , Segment(..), ControlRegister(..), DebugRegister(..)
   , MMXRegister(..), X87Register(..), XMMRegister(..)
 
@@ -71,7 +71,7 @@ data Register
 
 -- | A general-purpose register.
 --
--- Names taken from the 64-bit architecture, but they map onto
+-- The names are taken from the 64-bit architecture, but they map onto
 -- other modes in the obvious way.
 data GPR
   = RAX | RCX | RDX | RBX
