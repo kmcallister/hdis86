@@ -154,9 +154,9 @@ setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
 -- | Set the word size, i.e. whether to disassemble
 --   16-bit, 32-bit, or 64-bit code.
 setWordSize :: UD -> WordSize -> IO ()
-setWordSize _ Bits0 = error "no 0-bit disassembly mode"
-setWordSize _ Bits8 = error "no 8-bit disassembly mode"
-setWordSize s w = withUDPtr s $ flip ud_set_mode (fromIntegral $ bitsInWord w)
+setWordSize s w
+  | w `elem` [Bits16, Bits32, Bits64] = withUDPtr s $ flip ud_set_mode (bitsInWord w)
+setWordSize _ w = error ("no disassembly mode for word size " ++ show w)
 
 -- | Set the instruction pointer, i.e. the disassembler's idea of
 -- where the current instruction would live in memory.
@@ -261,14 +261,14 @@ getLvalU Bits0  _   = return 0
 getLvalU Bits8  uop = fromIntegral <$> get_lval_u8  uop
 getLvalU Bits16 uop = fromIntegral <$> get_lval_u16 uop
 getLvalU Bits32 uop = fromIntegral <$> get_lval_u32 uop
-getLvalU Bits64 uop = get_lval_u64 uop
+getLvalU _      uop = get_lval_u64 uop
 
 getLvalS :: WordSize -> Ptr UD_operand -> IO Int64
 getLvalS Bits0  _   = return 0
 getLvalS Bits8  uop = fromIntegral <$> get_lval_s8  uop
 getLvalS Bits16 uop = fromIntegral <$> get_lval_s16 uop
 getLvalS Bits32 uop = fromIntegral <$> get_lval_s32 uop
-getLvalS Bits64 uop = get_lval_s64 uop
+getLvalS _      uop = get_lval_s64 uop
 
 opDecode :: UDTM (Ptr UD_operand -> IO Operand)
 opDecode = makeUDTM
@@ -279,20 +279,15 @@ opDecode = makeUDTM
   , (udOpJimm,  (Jump  <$>) . getImm getLvalS)
   , (udOpConst, (Const <$>) . getImm getLvalU) ] where
 
-    wordSize :: Word8 -> WordSize
-    wordSize 0  = Bits0
-    wordSize 8  = Bits8
-    wordSize 16 = Bits16
-    wordSize 32 = Bits32
-    wordSize 64 = Bits64
-    wordSize n  = error ("bad word size " ++ show n)
-
     getReg f uop = register <$> f uop
 
     getMem uop = do
-      sz <- wordSize <$> get_offset uop
+      -- These uses of fromJust are safe unless the
+      -- C library is giving us bad data.
+      Just sz <- wordSize <$> get_offset uop
       Memory
-        <$> getReg get_base  uop
+        <$> ((fromJust . wordSize) <$> get_size uop)
+        <*> getReg get_base  uop
         <*> getReg get_index uop
         <*> get_scale uop
         <*> return sz
@@ -307,7 +302,7 @@ opDecode = makeUDTM
         _  -> error ("invaild pointer size " ++ show sz)
 
     getImm f uop = do
-      sz  <- wordSize <$> get_size uop
+      Just sz <- wordSize <$> get_size uop
       val <- f sz uop
       return $ Immediate sz val
 

@@ -14,7 +14,7 @@ module Udis86.Types
   , MMXRegister(..), X87Register(..), XMMRegister(..)
 
     -- * Word sizes
-  , WordSize(..), bitsInWord
+  , WordSize(..), wordSize, bitsInWord
 
     -- * Configuration
   , Config(..)
@@ -44,24 +44,41 @@ import Foreign.C.Types ( CUInt )
 
 import qualified Data.IntMap as IM
 
--- | Some fields, such as immediate operands, come in different
---   widths.  We store the equivalent integer value in a @'Word64'@,
---   along with a @'WordSize'@ to indicate the original width.
+-- | Machine word sizes.
+--
+-- Some fields, such as immediate operands, come in different
+-- widths.  We store the equivalent integer value in a @'Word64'@,
+-- along with a @'WordSize'@ to indicate the original width.
 data WordSize
   = Bits0   -- ^ Field not present, value will be 0
   | Bits8
   | Bits16
   | Bits32
+  | Bits48
   | Bits64
+  | Bits80
   deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
+-- | Convert a number of bits to a @'WordSize'@.
+wordSize :: Word8 -> Maybe WordSize
+wordSize 0  = Just Bits0
+wordSize 8  = Just Bits8
+wordSize 16 = Just Bits16
+wordSize 32 = Just Bits32
+wordSize 48 = Just Bits48
+wordSize 64 = Just Bits64
+wordSize 80 = Just Bits80
+wordSize _  = Nothing
+
 -- | Number of bits in a word of a given size.
-bitsInWord :: WordSize -> Int
+bitsInWord :: WordSize -> Word8
 bitsInWord Bits0  = 0
 bitsInWord Bits8  = 8
 bitsInWord Bits16 = 16
 bitsInWord Bits32 = 32
+bitsInWord Bits48 = 48
 bitsInWord Bits64 = 64
+bitsInWord Bits80 = 80
 
 -- | An @x86@ \/ @amd64@ register.
 data Register
@@ -169,7 +186,8 @@ data Operand
 
 -- | A memory-access operand.
 data Memory = Memory
-  { mBase         :: Register  -- ^ Base register
+  { mSize         :: WordSize  -- ^ Size of the word in memory
+  , mBase         :: Register  -- ^ Base register
   , mIndex        :: Register  -- ^ Index register
   , mScale        :: Word8     -- ^ Scale of index
   , mOffsetSize   :: WordSize  -- ^ Size of displacement / offset field
