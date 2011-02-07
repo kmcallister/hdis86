@@ -2,7 +2,7 @@
     DeriveDataTypeable #-}
 
 -- | Types provided by the disassembler.
-module Udis86.Types
+module Hdis86.Types
   (  -- * Instructions
     Instruction(..)
   , Prefix(..)
@@ -31,8 +31,8 @@ module Udis86.Types
   , register, opcode
   ) where
 
-import Udis86.C
-import Udis86.Opcode
+import Hdis86.C
+import Hdis86.Opcode
 
 import Data.Typeable ( Typeable )
 import Data.Data     ( Data )
@@ -165,7 +165,7 @@ data Instruction
 -- | Prefixes, used to modify an instruction.
 data Prefix
   = Seg Segment  -- ^ Segment override
-  | Rex          -- ^ `REX` prefix; enables certain 64-bit features
+  | Rex          -- ^ @REX@ prefix; enables certain 64-bit features
   | OperSize     -- ^ Operand size override
   | AddrSize     -- ^ Address size override
   | Lock         -- ^ Perform memory operations atomically
@@ -396,10 +396,10 @@ regMap = makeUDTM
 
   , (udRRip, RegIP)]
 
--- | Translate `udis86` internal register numbers.
+-- | Translate @udis86@ internal register numbers.
 register :: CUInt -> Register
 register n = fromMaybe RegNone $ lookupUDTM n regMap
 
--- | Translate `udis86` internal opcode numbers.
+-- | Translate @udis86@ internal opcode numbers.
 opcode :: CUInt -> Opcode
 opcode = toEnum . fromIntegral

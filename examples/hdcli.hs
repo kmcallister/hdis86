@@ -2,7 +2,7 @@
     RecordWildCards #-}
 module Main(main) where
 
-import Udis86
+import Hdis86
 
 import System.Environment ( getArgs )
 import Control.Monad

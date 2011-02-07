@@ -4,7 +4,7 @@
   , NamedFieldPuns
   , ViewPatterns #-}
 
--- | Interface to the `udis86` disassembler.
+-- | Interface to the @udis86@ disassembler.
 --
 -- The goal at this level of wrapping is to provide the
 -- maximum feature-set from the underlying C library,
@@ -12,9 +12,9 @@
 -- this module's API is thoroughly imperative, but uses
 -- Haskellish types and automatic resource management.
 --
--- For a higher-level, @IO@-free API, see @'Udis86.Pure'@.
+-- For a higher-level, @IO@-free API, see @'Hdis86.Pure'@.
 
-module Udis86.IO
+module Hdis86.IO
   ( -- * Instances
     UD
   , newUD
@@ -41,8 +41,8 @@ module Udis86.IO
   , setCallback
   ) where
 
-import Udis86.C
-import Udis86.Types
+import Hdis86.C
+import Hdis86.Types
 
 import Data.Typeable ( Typeable )
 import Control.Concurrent.MVar

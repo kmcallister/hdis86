@@ -5,15 +5,15 @@
 -- | Bare import of the @udis86@ C library.
 --
 -- This module is not recommended for most users. What you see is what you get.
--- You may instead be looking for @'Udis86.IO'@ or @'Udis86.Pure'@.
+-- You may instead be looking for @'Hdis86.IO'@ or @'Hdis86.Pure'@.
 --
 -- If you want to use this module, see the C library's documentation: <http://udis86.sourceforge.net>
 --
 -- Instruction opcodes are not enumerated here. You can convert between the
--- C-level integer codes and the type @'Udis86.Types.Opcode'@ using the latter's
+-- C-level integer codes and the type @'Hdis86.Types.Opcode'@ using the latter's
 -- @'Enum'@ instance.
 
-module Udis86.C where
+module Hdis86.C where
 
 import Foreign
 import Foreign.C

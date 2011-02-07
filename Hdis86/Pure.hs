@@ -5,8 +5,8 @@
 --
 -- This is the simplest, most high-level interface.
 --
--- See @'Udis86.IO'@ if you need more control or performance.
-module Udis86.Pure
+-- See @'Hdis86.IO'@ if you need more control or performance.
+module Hdis86.Pure
   ( -- * Simple disassembly
     disassemble
 
@@ -15,9 +15,9 @@ module Udis86.Pure
   , Metadata(..)
   ) where
 
-import Udis86.Types
-import Udis86.IO ( UD )
-import qualified Udis86.IO as I
+import Hdis86.Types
+import Hdis86.IO ( UD )
+import qualified Hdis86.IO as I
 
 import Data.Typeable ( Typeable )
 import Data.Data     ( Data )

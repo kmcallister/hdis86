@@ -1,4 +1,4 @@
-name:                udis86
+name:                hdis86
 version:             0.1
 license:             BSD3
 license-file:        LICENSE
@@ -16,12 +16,12 @@ extra-source-files:
 
 library
   exposed-modules:  
-      Udis86.Opcode
-    , Udis86.C
-    , Udis86.Types
-    , Udis86.IO
-    , Udis86.Pure
-    , Udis86
+      Hdis86.Opcode
+    , Hdis86.C
+    , Hdis86.Types
+    , Hdis86.IO
+    , Hdis86.Pure
+    , Hdis86
   ghc-options:       -Wall
   build-depends:
       base       >= 3 && < 5
