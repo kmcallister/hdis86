@@ -52,7 +52,7 @@ foreign import ccall "ud_set_input_hook"
   ud_set_input_hook :: Ptr UD_t -> FunPtr CInputHook -> IO ()
 
 foreign import ccall "ud_set_input_buffer"
-  ud_set_input_buffer :: Ptr UD_t -> CString -> CSize -> IO ()
+  ud_set_input_buffer :: Ptr UD_t -> Ptr CChar -> CSize -> IO ()
 
 foreign import ccall "ud_set_input_file"
   ud_set_input_file :: Ptr UD_t -> Ptr CFile -> IO ()
