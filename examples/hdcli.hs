@@ -65,5 +65,8 @@ out Opts{..} Metadata{..} = do
     putChar '\n'
     when doOff $ putStr "                -"
     printf "%-16s" leftover
-  when doDump (putStr ('\n' : replicate 34 ' ') >> putStr (show mdInst) >> putChar '\n')
+  when doDump $ do
+    putChar '\n'
+    putStr $ replicate 34 ' '
+    print mdInst
   putChar '\n'

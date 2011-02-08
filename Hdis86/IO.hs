@@ -97,7 +97,7 @@ setXlat ty fp st@State{..} = do
   return $ st { udXlatType = ty, udXlat = fp }
 
 finalizeState :: MVar State -> IO ()
-finalizeState s = withMVar s $ \st@State{..} -> do
+finalizeState = flip withMVar $ \st@State{..} -> do
   _ <- setInput InNone st
   _ <- setXlat  XlBuiltin nullFunPtr st
   free udPtr
