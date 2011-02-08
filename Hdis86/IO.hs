@@ -138,9 +138,9 @@ setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
 
 -- | Set up the @'UD'@ instance to read machine code from a @'ByteString'@.
 --
-
--- The caller has no obligation to keep the @'ByteString'@ value live,
--- and no copy is made.
+-- This library does not copy the contents of the @'ByteString'@.
+-- It will hold onto the value until another input source is selected,
+-- or until the @'UD'@ value becomes unreachable.
 setInputBuffer :: UD -> ByteString -> IO ()
 setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
   let (ptr, off, len) = BS.toForeignPtr bs

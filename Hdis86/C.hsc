@@ -7,7 +7,7 @@
 -- This module is not recommended for most users. What you see is what you get.
 -- You may instead be looking for @'Hdis86.IO'@ or @'Hdis86.Pure'@.
 --
--- If you want to use this module, see the C library's documentation: <http://udis86.sourceforge.net>
+-- If you want to use this module, see the @udis86@ documentation: <http://udis86.sourceforge.net>
 --
 -- Instruction opcodes are not enumerated here. You can convert between the
 -- C-level integer codes and the type @'Hdis86.Types.Opcode'@ using the latter's
