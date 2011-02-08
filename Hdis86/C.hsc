@@ -21,7 +21,7 @@ import Control.Monad ( liftM2 )
 
 #include <udis86.h>
 
--- * The type `ud_t`
+-- * The type @ud_t@
 
 -- | Just a pointer tag, with no Haskell representation.
 data UD_t

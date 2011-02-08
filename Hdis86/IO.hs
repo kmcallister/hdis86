@@ -176,7 +176,7 @@ setSyntax (UD s) = modifyMVar_ s . setXlat XlBuiltin . f where
 -- no point passing the UD since we can close over it easily
 -- | Register an action to be performed after each instruction is disassembled.
 --
--- This disables updating of the string returned by `getAssembly`.
+-- This disables updating of the string returned by @'getAssembly'@.
 setCallback :: UD -> IO () -> IO ()
 setCallback (UD s) act = do
   fp <- c_mkTranslator (const act)

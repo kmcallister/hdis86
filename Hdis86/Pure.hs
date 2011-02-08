@@ -1,7 +1,7 @@
 {-# LANGUAGE
     DeriveDataTypeable #-}
 
--- | Interface to the `udis86` disassembler.
+-- | Interface to the @udis86@ disassembler.
 --
 -- This is the simplest, most high-level interface.
 --
