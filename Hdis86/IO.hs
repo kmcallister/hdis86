@@ -25,7 +25,7 @@ module Hdis86.IO
 
     -- * Input sources
   , setInputBuffer
-  , InputHook, endOfInput, setInputHook
+  , InputHook, setInputHook
 
     -- * Disassembly
   , disassemble, skip, setIP
@@ -125,17 +125,13 @@ withUDPtr (UD s) f = withMVar s $ \State{udPtr} -> f udPtr
 -- | A custom input source.
 --
 -- Each time this action is executed, it should return a single byte of
--- input, or return @'endOfInput'@ if there are no more bytes to read.
-type InputHook = IO Int
-
--- | Special value representing the end of input.
-endOfInput :: Int
-endOfInput = fromIntegral ud_eoi
+-- input, or @'Nothing'@ if there are no more bytes to read.
+type InputHook = IO (Maybe Word8)
 
 -- | Register an @'InputHook'@ to provide machine code to disassemble.
 setInputHook :: UD -> InputHook -> IO ()
 setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
-  fp <- c_mkInputHook (fromIntegral <$> f)
+  fp <- c_mkInputHook (maybe ud_eoi fromIntegral <$> f)
   ud_set_input_hook udPtr fp
   setInput (InHook fp) st
 
