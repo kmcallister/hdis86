@@ -13,6 +13,10 @@
 -- Haskellish types and automatic resource management.
 --
 -- For a higher-level, @IO@-free API, see @'Hdis86.Pure'@.
+--
+-- This module is fully thread-safe: any number of threads
+-- may manipulate one or several @'UD'@ objects at the same
+-- time.
 
 module Hdis86.IO
   ( -- * Instances
@@ -46,6 +50,7 @@ import Hdis86.Types
 
 import Data.Typeable ( Typeable )
 import Control.Concurrent.MVar
+  ( MVar, newMVar, withMVar, modifyMVar_, addMVarFinalizer )
 import Foreign
 import Foreign.C.String
 import Control.Applicative hiding ( Const )
@@ -213,14 +218,14 @@ getOffset = flip withUDPtr ud_insn_off
 
 -- | Get the current instruction's machine code as a hexadecimal string.
 getHex :: UD -> IO String
-getHex s = withUDPtr s $ \p ->
+getHex = flip withUDPtr $ \p ->
   ud_insn_hex p >>= peekCString
 
 -- | Get the current instruction's machine code as a @'ByteString'@.
 --
 -- The bytes are copied out of internal state.
 getBytes :: UD -> IO ByteString
-getBytes s = withUDPtr s $ \p -> do
+getBytes = flip withUDPtr $ \p -> do
   len <- ud_insn_len p
   ptr <- ud_insn_ptr p
   -- Int vs. CUInt overflow problems?
@@ -230,7 +235,7 @@ getBytes s = withUDPtr s $ \p -> do
 --
 -- See also @'setSyntax'@.
 getAssembly :: UD -> IO String
-getAssembly s = withUDPtr s $ \p ->
+getAssembly = flip withUDPtr $ \p ->
   ud_insn_asm p >>= peekCString
 
 -- | Skip the next /n/ bytes of the input.
