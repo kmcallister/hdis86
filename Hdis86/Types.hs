@@ -27,7 +27,7 @@ module Hdis86.Types
   , Opcode(..)
   ) where
 
-import Hdis86.Opcode
+import Hdis86.Internal.Opcode
 
 import Data.Typeable ( Typeable )
 import Data.Data     ( Data )

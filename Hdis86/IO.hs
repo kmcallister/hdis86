@@ -47,7 +47,7 @@ module Hdis86.IO
 
 import qualified Hdis86.C as C
 import Hdis86.Types
-import Hdis86.Map
+import Hdis86.Internal.Map
 
 import Data.Typeable ( Typeable )
 import Control.Concurrent.MVar

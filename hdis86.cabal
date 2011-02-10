@@ -16,13 +16,13 @@ extra-source-files:
 
 library
   exposed-modules:  
-      Hdis86.Opcode
-    , Hdis86.Map
-    , Hdis86.C
+      Hdis86
     , Hdis86.Types
-    , Hdis86.IO
     , Hdis86.Pure
-    , Hdis86
+    , Hdis86.IO
+    , Hdis86.C
+    , Hdis86.Internal.Opcode
+    , Hdis86.Internal.Map
   ghc-options:       -Wall
   build-depends:
       base       >= 3 && < 5

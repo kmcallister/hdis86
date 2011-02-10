@@ -1,12 +1,12 @@
 {-# OPTIONS_HADDOCK
     hide #-}
-module Hdis86.Map
+module Hdis86.Internal.Map
   ( UDTM, makeUDTM, lookupUDTM
   , register, opcode
   ) where
 
-import Hdis86.C hiding ( Operand )
-import Hdis86.Opcode
+import Hdis86.Internal.Opcode
+import Hdis86.C
 import Hdis86.Types
 
 import Data.Maybe
