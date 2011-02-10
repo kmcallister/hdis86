@@ -37,9 +37,7 @@ module Hdis86.IO
 
     -- * Configuration
   , setConfig
-  , setCPUMode
-  , setSyntax
-  , setVendor
+  , setVendor, setCPUMode, setSyntax
 
     -- * Callbacks
   , setCallback
@@ -287,21 +285,22 @@ opDecode = makeUDTM
       -- These uses of fromJust are safe unless the
       -- C library is giving us bad data.
       Just sz <- wordSize <$> C.get_offset uop
+      off <- Immediate sz <$> getLvalS sz uop
       Memory
         <$> ((fromJust . wordSize) <$> C.get_size uop)
         <*> getReg C.get_base  uop
         <*> getReg C.get_index uop
         <*> C.get_scale uop
-        <*> return sz
-        <*> getLvalS sz uop
+        <*> pure off
 
     getPtr uop = do
       sz <- C.get_size uop
       (seg, off) <- C.get_lval_ptr uop
-      return $ case sz of
-        32 -> Pointer seg Bits16 off
-        48 -> Pointer seg Bits32 off
-        _  -> error ("invaild pointer size " ++ show sz)
+      let szw = case sz of
+            32 -> Bits16
+            48 -> Bits32
+            _  -> error ("invaild pointer size " ++ show sz)
+      return . Pointer seg $ Immediate szw off
 
     getImm f uop = do
       Just sz <- wordSize <$> C.get_size uop

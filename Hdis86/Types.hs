@@ -176,19 +176,17 @@ data Operand
 
 -- | A memory-access operand.
 data Memory = Memory
-  { mSize         :: WordSize  -- ^ Size of the word in memory
-  , mBase         :: Register  -- ^ Base register
-  , mIndex        :: Register  -- ^ Index register
-  , mScale        :: Word8     -- ^ Scale of index
-  , mOffsetSize   :: WordSize  -- ^ Size of displacement / offset field
-  , mOffset       :: Int64     -- ^ Displacement / offset value
+  { mSize   :: WordSize         -- ^ Size of the word in memory
+  , mBase   :: Register         -- ^ Base register
+  , mIndex  :: Register         -- ^ Index register
+  , mScale  :: Word8            -- ^ Scale of index
+  , mOffset :: Immediate Int64  -- ^ Displacement / offset value
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | A segmented pointer operand.
 data Pointer = Pointer
-  { pSegment    :: Word16    -- ^ Segment
-  , pOffsetSize :: WordSize  -- ^ Size of the offset, 16 or 32 bits
-  , pOffset     :: Word32    -- ^ Offset
+  { pSegment :: Word16            -- ^ Segment
+  , pOffset  :: Immediate Word32  -- ^ Offset, 16 or 32 bits
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | An immediate operand.
