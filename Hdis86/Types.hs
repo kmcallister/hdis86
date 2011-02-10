@@ -18,7 +18,7 @@ module Hdis86.Types
 
     -- * Configuration
   , Config(..)
-  , Vendor(..), Syntax(..)
+  , Vendor(..), CPUMode(..), Syntax(..)
 
     -- * Common configurations
   , intel32, intel64, amd32, amd64
@@ -212,14 +212,21 @@ data Syntax
 
 -- | Overall configuration of the disassembler.
 data Config = Config
-  { cfgVendor   :: Vendor    -- ^ CPU vendor; determines the instruction set used
-  , cfgWordSize :: WordSize  -- ^ Disassemble 16-, 32-, or 64-bit code
-  , cfgSyntax   :: Syntax    -- ^ Syntax to use when generating assembly
-  , cfgOrigin   :: Word64    -- ^ Address where the first instruction would live in memory
+  { cfgVendor  :: Vendor   -- ^ CPU vendor; determines the instruction set used
+  , cfgCPUMode :: CPUMode  -- ^ Disassemble 16-, 32-, or 64-bit code
+  , cfgSyntax  :: Syntax   -- ^ Syntax to use when generating assembly
+  , cfgOrigin  :: Word64   -- ^ Address where the first instruction would live in memory
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
+-- | CPU execution mode.
+data CPUMode
+  = Mode16  -- ^ 16-bit mode
+  | Mode32  -- ^ 32-bit mode
+  | Mode64  -- ^ 64-bit mode
+  deriving (Eq, Ord, Show, Read, Enum, Bounded, Typeable, Data)
+
 intel32, intel64, amd32, amd64 :: Config
-intel32 = Config Intel Bits32 SyntaxNone 0
-intel64 = Config Intel Bits64 SyntaxNone 0
-amd32   = Config AMD   Bits32 SyntaxNone 0
-amd64   = Config AMD   Bits64 SyntaxNone 0
+intel32 = Config Intel Mode32 SyntaxNone 0
+intel64 = Config Intel Mode64 SyntaxNone 0
+amd32   = Config AMD   Mode32 SyntaxNone 0
+amd64   = Config AMD   Mode64 SyntaxNone 0

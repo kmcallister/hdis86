@@ -37,7 +37,7 @@ module Hdis86.IO
 
     -- * Configuration
   , setConfig
-  , setWordSize
+  , setCPUMode
   , setSyntax
   , setVendor
 
@@ -153,12 +153,12 @@ setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
 
 -- TODO: error checking
 
--- | Set the word size, i.e. whether to disassemble
---   16-bit, 32-bit, or 64-bit code.
-setWordSize :: UD -> WordSize -> IO ()
-setWordSize s w
-  | w `elem` [Bits16, Bits32, Bits64] = withUDPtr s $ flip C.set_mode (bitsInWord w)
-setWordSize _ w = error ("no disassembly mode for word size " ++ show w)
+-- | Set the CPU mode, i.e. 16-bit, 32-bit, or 64-bit.
+setCPUMode :: UD -> CPUMode -> IO ()
+setCPUMode s = withUDPtr s . flip C.set_mode . f where
+  f Mode16 = 16
+  f Mode32 = 32
+  f Mode64 = 64
 
 -- | Set the instruction pointer, i.e. the disassembler's idea of
 -- where the current instruction would live in memory.
@@ -191,13 +191,13 @@ setVendor ud = withUDPtr ud . flip C.set_vendor . f where
 
 -- | Set an overall configuration.
 --
--- Calls each of @'setVendor'@, @'setWordSize'@, @'setSyntax'@, @'setIP'@.
+-- Calls each of @'setVendor'@, @'setCPUMode'@, @'setSyntax'@, @'setIP'@.
 setConfig :: UD -> Config -> IO ()
 setConfig ud Config{..} = do
-  setVendor   ud cfgVendor
-  setWordSize ud cfgWordSize
-  setSyntax   ud cfgSyntax
-  setIP       ud cfgOrigin
+  setVendor  ud cfgVendor
+  setCPUMode ud cfgCPUMode
+  setSyntax  ud cfgSyntax
+  setIP      ud cfgOrigin
 
 -- | Disassemble the next instruction and return its length in bytes.
 --
