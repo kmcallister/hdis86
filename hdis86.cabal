@@ -17,6 +17,7 @@ extra-source-files:
 library
   exposed-modules:  
       Hdis86.Opcode
+    , Hdis86.Map
     , Hdis86.C
     , Hdis86.Types
     , Hdis86.IO
