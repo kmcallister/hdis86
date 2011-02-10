@@ -24,9 +24,9 @@ getOpts = go (dfl, amd32 { cfgSyntax = SyntaxIntel }) where
   go pair@(opt,cfg) = f where
     f []                      = pair
     f [fname@(c:_)] | c /= '-' = (opt { file = Just fname }, cfg)
-    f ("-16"       :xs) = go (opt, cfg { cfgWordSize = Bits16      }) xs
-    f ("-32"       :xs) = go (opt, cfg { cfgWordSize = Bits32      }) xs
-    f ("-64"       :xs) = go (opt, cfg { cfgWordSize = Bits64      }) xs
+    f ("-16"       :xs) = go (opt, cfg { cfgCPUMode  = Mode16      }) xs
+    f ("-32"       :xs) = go (opt, cfg { cfgCPUMode  = Mode32      }) xs
+    f ("-64"       :xs) = go (opt, cfg { cfgCPUMode  = Mode64      }) xs
     f ("-intel"    :xs) = go (opt, cfg { cfgSyntax   = SyntaxIntel }) xs
     f ("-att"      :xs) = go (opt, cfg { cfgSyntax   = SyntaxATT   }) xs
     f ("-v":"intel":xs) = go (opt, cfg { cfgVendor   = Intel       }) xs
