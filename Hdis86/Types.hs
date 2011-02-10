@@ -31,7 +31,7 @@ module Hdis86.Types
   , register, opcode
   ) where
 
-import Hdis86.C
+import Hdis86.C hiding ( Operand )
 import Hdis86.Opcode
 
 import Data.Typeable ( Typeable )

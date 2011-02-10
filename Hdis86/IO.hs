@@ -45,7 +45,7 @@ module Hdis86.IO
   , setCallback
   ) where
 
-import Hdis86.C
+import qualified Hdis86.C as C
 import Hdis86.Types
 
 import Data.Typeable ( Typeable )
@@ -67,7 +67,7 @@ import qualified Data.ByteString.Internal as BS
 
 data Input
   = InNone
-  | InHook (FunPtr CInputHook)
+  | InHook (FunPtr C.InputHook)
   | InBuf  (ForeignPtr Word8)
 
 data XlatType
@@ -75,10 +75,10 @@ data XlatType
   | XlCustom
 
 data State = State
-  { udPtr      :: Ptr UD_t
+  { udPtr      :: Ptr C.UD_t
   , udInput    :: Input
   , udXlatType :: XlatType
-  , udXlat     :: FunPtr CTranslator }
+  , udXlat     :: FunPtr C.Translator }
 
 -- | Abstract type representing an instance of the disassembler.
 newtype UD = UD (MVar State)
@@ -93,12 +93,12 @@ setInput inpt st@State{udInput} = do
     _ -> return ()
   return $ st { udInput = inpt }
 
-setXlat :: XlatType -> FunPtr CTranslator -> State -> IO State
+setXlat :: XlatType -> FunPtr C.Translator -> State -> IO State
 setXlat ty fp st@State{..} = do
   case udXlatType of
     XlCustom -> freeHaskellFunPtr udXlat
     _ -> return ()
-  ud_set_syntax udPtr fp
+  C.set_syntax udPtr fp
   return $ st { udXlatType = ty, udXlat = fp }
 
 finalizeState :: MVar State -> IO ()
@@ -113,13 +113,13 @@ finalizeState = flip withMVar $ \st@State{..} -> do
 -- when this @'UD'@ value becomes unreachable.
 newUD :: IO UD
 newUD = do
-  p <- mallocBytes sizeof_ud_t
-  ud_init p
+  p <- mallocBytes C.sizeof_ud_t
+  C.init p
   s <- newMVar $ State p InNone XlBuiltin nullFunPtr
   addMVarFinalizer s (finalizeState s)
   return $ UD s
 
-withUDPtr :: UD -> (Ptr UD_t -> IO a) -> IO a
+withUDPtr :: UD -> (Ptr C.UD_t -> IO a) -> IO a
 withUDPtr (UD s) f = withMVar s $ \State{udPtr} -> f udPtr
 
 -- | A custom input source.
@@ -131,8 +131,8 @@ type InputHook = IO (Maybe Word8)
 -- | Register an @'InputHook'@ to provide machine code to disassemble.
 setInputHook :: UD -> InputHook -> IO ()
 setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
-  fp <- c_mkInputHook (maybe ud_eoi fromIntegral <$> f)
-  ud_set_input_hook udPtr fp
+  fp <- C.wrap_InputHook (maybe C.eoi fromIntegral <$> f)
+  C.set_input_hook udPtr fp
   setInput (InHook fp) st
 
 -- FIXME: setInputFile
@@ -145,7 +145,7 @@ setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
 setInputBuffer :: UD -> ByteString -> IO ()
 setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
   let (ptr, off, len) = BS.toForeignPtr bs
-  ud_set_input_buffer udPtr
+  C.set_input_buffer udPtr
     (unsafeForeignPtrToPtr ptr `plusPtr` off)
     (fromIntegral len)
   setInput (InBuf ptr) st
@@ -156,13 +156,13 @@ setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
 --   16-bit, 32-bit, or 64-bit code.
 setWordSize :: UD -> WordSize -> IO ()
 setWordSize s w
-  | w `elem` [Bits16, Bits32, Bits64] = withUDPtr s $ flip ud_set_mode (bitsInWord w)
+  | w `elem` [Bits16, Bits32, Bits64] = withUDPtr s $ flip C.set_mode (bitsInWord w)
 setWordSize _ w = error ("no disassembly mode for word size " ++ show w)
 
 -- | Set the instruction pointer, i.e. the disassembler's idea of
 -- where the current instruction would live in memory.
 setIP :: UD -> Word64 -> IO ()
-setIP s w = withUDPtr s $ flip ud_set_pc w
+setIP s w = withUDPtr s $ flip C.set_pc w
 
 -- | Set the assembly syntax to be used by @'getAssembly'@.
 --
@@ -170,8 +170,8 @@ setIP s w = withUDPtr s $ flip ud_set_pc w
 setSyntax :: UD -> Syntax -> IO ()
 setSyntax (UD s) = modifyMVar_ s . setXlat XlBuiltin . f where
   f SyntaxNone  = nullFunPtr
-  f SyntaxIntel = ud_translate_intel
-  f SyntaxATT   = ud_translate_att
+  f SyntaxIntel = C.translate_intel
+  f SyntaxATT   = C.translate_att
 
 -- no point passing the UD since we can close over it easily
 -- | Register an action to be performed after each instruction is disassembled.
@@ -179,14 +179,14 @@ setSyntax (UD s) = modifyMVar_ s . setXlat XlBuiltin . f where
 -- This disables updating of the string returned by @'getAssembly'@.
 setCallback :: UD -> IO () -> IO ()
 setCallback (UD s) act = do
-  fp <- c_mkTranslator (const act)
+  fp <- C.wrap_Translator (const act)
   modifyMVar_ s $ setXlat XlCustom fp
 
 -- | Choose an instruction set variation.
 setVendor :: UD -> Vendor -> IO ()
-setVendor ud = withUDPtr ud . flip ud_set_vendor . f where
-  f Intel = udVendorIntel
-  f AMD   = udVendorAmd
+setVendor ud = withUDPtr ud . flip C.set_vendor . f where
+  f Intel = C.udVendorIntel
+  f AMD   = C.udVendorAmd
 
 -- | Set an overall configuration.
 --
@@ -202,28 +202,28 @@ setConfig ud Config{..} = do
 --
 -- Returns zero if there are no more instructions.
 disassemble :: UD -> IO Word
-disassemble = (fromIntegral <$>) . flip withUDPtr ud_disassemble
+disassemble = (fromIntegral <$>) . flip withUDPtr C.disassemble
 
 -- | Get the length of the current instruction in bytes.
 getLength :: UD -> IO Word
-getLength = (fromIntegral <$>) . flip withUDPtr ud_insn_len
+getLength = (fromIntegral <$>) . flip withUDPtr C.insn_len
 
 -- | Get the offset of the current instruction from FIXME.
 getOffset :: UD -> IO Word64
-getOffset = flip withUDPtr ud_insn_off
+getOffset = flip withUDPtr C.insn_off
 
 -- | Get the current instruction's machine code as a hexadecimal string.
 getHex :: UD -> IO String
 getHex = flip withUDPtr $ \p ->
-  ud_insn_hex p >>= peekCString
+  C.insn_hex p >>= peekCString
 
 -- | Get the current instruction's machine code as a @'ByteString'@.
 --
 -- The bytes are copied out of internal state.
 getBytes :: UD -> IO ByteString
 getBytes = flip withUDPtr $ \p -> do
-  len <- ud_insn_len p
-  ptr <- ud_insn_ptr p
+  len <- C.insn_len p
+  ptr <- C.insn_ptr p
   -- Int vs. CUInt overflow problems?
   BS.packCStringLen (castPtr ptr, fromIntegral len)
 
@@ -232,87 +232,87 @@ getBytes = flip withUDPtr $ \p -> do
 -- See also @'setSyntax'@.
 getAssembly :: UD -> IO String
 getAssembly = flip withUDPtr $ \p ->
-  ud_insn_asm p >>= peekCString
+  C.insn_asm p >>= peekCString
 
 -- | Skip the next /n/ bytes of the input.
 skip :: UD -> Word -> IO ()
-skip s n = withUDPtr s $ flip ud_input_skip (fromIntegral n)
+skip s n = withUDPtr s $ flip C.input_skip (fromIntegral n)
 
-getPfx :: Ptr UD_t -> IO [Prefix]
+getPfx :: Ptr C.UD_t -> IO [Prefix]
 getPfx udt = catMaybes <$> mapM get allPfx where
   allPfx =
-    [ (get_pfx_seg,   getSeg)
-    , (get_pfx_rex,   k Rex)
-    , (get_pfx_opr,   k OperSize)
-    , (get_pfx_adr,   k AddrSize)
-    , (get_pfx_lock,  k Lock)
-    , (get_pfx_rep,   k Rep)
-    , (get_pfx_repe,  k RepE)
-    , (get_pfx_repne, k RepNE)
+    [ (C.get_pfx_seg,   getSeg)
+    , (C.get_pfx_rex,   k Rex)
+    , (C.get_pfx_opr,   k OperSize)
+    , (C.get_pfx_adr,   k AddrSize)
+    , (C.get_pfx_lock,  k Lock)
+    , (C.get_pfx_rep,   k Rep)
+    , (C.get_pfx_repe,  k RepE)
+    , (C.get_pfx_repne, k RepNE)
     ]
   get (retr, conv) = do
     n <- fromIntegral <$> retr udt
-    return (guard (n /= udNone) >> conv n)
+    return (guard (n /= C.udNone) >> conv n)
   getSeg (register -> RegSeg seg) = Just $ Seg seg
   getSeg _ = Nothing
   k v _ = Just v
 
-getLvalU :: WordSize -> Ptr UD_operand -> IO Word64
+getLvalU :: WordSize -> Ptr C.Operand -> IO Word64
 getLvalU Bits0  _   = return 0
-getLvalU Bits8  uop = fromIntegral <$> get_lval_u8  uop
-getLvalU Bits16 uop = fromIntegral <$> get_lval_u16 uop
-getLvalU Bits32 uop = fromIntegral <$> get_lval_u32 uop
-getLvalU _      uop = get_lval_u64 uop
+getLvalU Bits8  uop = fromIntegral <$> C.get_lval_u8  uop
+getLvalU Bits16 uop = fromIntegral <$> C.get_lval_u16 uop
+getLvalU Bits32 uop = fromIntegral <$> C.get_lval_u32 uop
+getLvalU _      uop = C.get_lval_u64 uop
 
-getLvalS :: WordSize -> Ptr UD_operand -> IO Int64
+getLvalS :: WordSize -> Ptr C.Operand -> IO Int64
 getLvalS Bits0  _   = return 0
-getLvalS Bits8  uop = fromIntegral <$> get_lval_s8  uop
-getLvalS Bits16 uop = fromIntegral <$> get_lval_s16 uop
-getLvalS Bits32 uop = fromIntegral <$> get_lval_s32 uop
-getLvalS _      uop = get_lval_s64 uop
+getLvalS Bits8  uop = fromIntegral <$> C.get_lval_s8  uop
+getLvalS Bits16 uop = fromIntegral <$> C.get_lval_s16 uop
+getLvalS Bits32 uop = fromIntegral <$> C.get_lval_s32 uop
+getLvalS _      uop = C.get_lval_s64 uop
 
-opDecode :: UDTM (Ptr UD_operand -> IO Operand)
+opDecode :: UDTM (Ptr C.Operand -> IO Operand)
 opDecode = makeUDTM
-  [ (udOpMem,   (Mem   <$>) . getMem)
-  , (udOpReg,   (Reg   <$>) . getReg get_base)
-  , (udOpPtr,   (Ptr   <$>) . getPtr)
-  , (udOpImm,   (Imm   <$>) . getImm getLvalU)
-  , (udOpJimm,  (Jump  <$>) . getImm getLvalS)
-  , (udOpConst, (Const <$>) . getImm getLvalU) ] where
+  [ (C.udOpMem,   (Mem   <$>) . getMem)
+  , (C.udOpReg,   (Reg   <$>) . getReg C.get_base)
+  , (C.udOpPtr,   (Ptr   <$>) . getPtr)
+  , (C.udOpImm,   (Imm   <$>) . getImm getLvalU)
+  , (C.udOpJimm,  (Jump  <$>) . getImm getLvalS)
+  , (C.udOpConst, (Const <$>) . getImm getLvalU) ] where
 
     getReg f uop = register <$> f uop
 
     getMem uop = do
       -- These uses of fromJust are safe unless the
       -- C library is giving us bad data.
-      Just sz <- wordSize <$> get_offset uop
+      Just sz <- wordSize <$> C.get_offset uop
       Memory
-        <$> ((fromJust . wordSize) <$> get_size uop)
-        <*> getReg get_base  uop
-        <*> getReg get_index uop
-        <*> get_scale uop
+        <$> ((fromJust . wordSize) <$> C.get_size uop)
+        <*> getReg C.get_base  uop
+        <*> getReg C.get_index uop
+        <*> C.get_scale uop
         <*> return sz
         <*> getLvalS sz uop
 
     getPtr uop = do
-      sz <- get_size uop
-      (seg, off) <- get_lval_ptr uop
+      sz <- C.get_size uop
+      (seg, off) <- C.get_lval_ptr uop
       return $ case sz of
         32 -> Pointer seg Bits16 off
         48 -> Pointer seg Bits32 off
         _  -> error ("invaild pointer size " ++ show sz)
 
     getImm f uop = do
-      Just sz <- wordSize <$> get_size uop
+      Just sz <- wordSize <$> C.get_size uop
       val <- f sz uop
       return $ Immediate sz val
 
-getOperands :: Ptr UD_t -> IO [Operand]
+getOperands :: Ptr C.UD_t -> IO [Operand]
 getOperands udt = catMaybes <$> mapM decode getters where
-  getters = [get_operand1, get_operand2, get_operand3]
+  getters = [C.get_operand1, C.get_operand2, C.get_operand3]
   decode f = do
     let uop = f udt
-    ty  <- get_type uop
+    ty  <- C.get_type uop
     case lookupUDTM ty opDecode of
       Just g  -> Just <$> g uop
       Nothing -> return Nothing
@@ -320,4 +320,4 @@ getOperands udt = catMaybes <$> mapM decode getters where
 -- | Get the current instruction.
 getInstruction :: UD -> IO Instruction
 getInstruction = flip withUDPtr $ \udt ->
-  Inst <$> getPfx udt <*> (opcode <$> get_mnemonic udt) <*> getOperands udt
+  Inst <$> getPfx udt <*> (opcode <$> C.get_mnemonic udt) <*> getOperands udt

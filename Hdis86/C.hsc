@@ -31,70 +31,71 @@ sizeof_ud_t = (#size ud_t)
 
 -- * Callbacks
 
-type CInputHook = IO CInt
-type CTranslator = Ptr UD_t -> IO ()
+type InputHook = IO CInt
+
+eoi :: CInt
+eoi = (#const UD_EOI)
 
 foreign import ccall "wrapper"
-  c_mkInputHook :: CInputHook -> IO (FunPtr CInputHook)
+  wrap_InputHook :: InputHook -> IO (FunPtr InputHook)
+
+type Translator = Ptr UD_t -> IO ()
 
 foreign import ccall "wrapper"
-  c_mkTranslator :: CTranslator -> IO (FunPtr CTranslator)
-
-ud_eoi :: CInt
-ud_eoi = (#const UD_EOI)
+  wrap_Translator :: Translator -> IO (FunPtr Translator)
 
 -- * Imported functions
 
 foreign import ccall "ud_init"
-  ud_init :: Ptr UD_t -> IO ()
+  init :: Ptr UD_t -> IO ()
 
 foreign import ccall "ud_set_input_hook"
-  ud_set_input_hook :: Ptr UD_t -> FunPtr CInputHook -> IO ()
+  set_input_hook :: Ptr UD_t -> FunPtr InputHook -> IO ()
 
 foreign import ccall "ud_set_input_buffer"
-  ud_set_input_buffer :: Ptr UD_t -> Ptr CChar -> CSize -> IO ()
+  set_input_buffer :: Ptr UD_t -> Ptr CChar -> CSize -> IO ()
 
 foreign import ccall "ud_set_input_file"
-  ud_set_input_file :: Ptr UD_t -> Ptr CFile -> IO ()
+  set_input_file :: Ptr UD_t -> Ptr CFile -> IO ()
 
 foreign import ccall "ud_set_mode"
-  ud_set_mode :: Ptr UD_t -> (#type uint8_t) -> IO ()
+  set_mode :: Ptr UD_t -> (#type uint8_t) -> IO ()
 
 foreign import ccall "ud_set_pc"
-  ud_set_pc :: Ptr UD_t -> (#type uint64_t) -> IO ()
+  set_pc :: Ptr UD_t -> (#type uint64_t) -> IO ()
 
 foreign import ccall "ud_set_syntax"
-  ud_set_syntax :: Ptr UD_t -> FunPtr CTranslator -> IO ()
+  set_syntax :: Ptr UD_t -> FunPtr Translator -> IO ()
 
 foreign import ccall "ud_set_vendor"
-  ud_set_vendor :: Ptr UD_t -> CUInt -> IO ()
+  set_vendor :: Ptr UD_t -> CUInt -> IO ()
 
 foreign import ccall "ud_disassemble"
-  ud_disassemble :: Ptr UD_t -> IO CUInt
+  disassemble :: Ptr UD_t -> IO CUInt
 
 foreign import ccall "ud_insn_len"
-  ud_insn_len :: Ptr UD_t -> IO CUInt
+  insn_len :: Ptr UD_t -> IO CUInt
 
 foreign import ccall "ud_insn_off"
-  ud_insn_off :: Ptr UD_t -> IO (#type uint64_t)
+  insn_off :: Ptr UD_t -> IO (#type uint64_t)
 
 foreign import ccall "ud_insn_hex"
-  ud_insn_hex :: Ptr UD_t -> IO CString
+  insn_hex :: Ptr UD_t -> IO CString
 
 foreign import ccall "ud_insn_ptr"
-  ud_insn_ptr :: Ptr UD_t -> IO (Ptr (#type uint8_t))
+  insn_ptr :: Ptr UD_t -> IO (Ptr (#type uint8_t))
 
 foreign import ccall "ud_insn_asm"
-  ud_insn_asm :: Ptr UD_t -> IO CString
+  insn_asm :: Ptr UD_t -> IO CString
 
 foreign import ccall "ud_input_skip"
-  ud_input_skip :: Ptr UD_t -> CSize -> IO ()
+  input_skip :: Ptr UD_t -> CSize -> IO ()
 
 foreign import ccall "&ud_translate_intel"
-  ud_translate_intel :: FunPtr CTranslator
+  translate_intel :: FunPtr Translator
 
 foreign import ccall "&ud_translate_att"
-  ud_translate_att :: FunPtr CTranslator
+  translate_att :: FunPtr Translator
 
 -- * Struct accessors
 
@@ -102,42 +103,42 @@ get_mnemonic :: Ptr UD_t -> IO CUInt
 get_mnemonic p = (#peek struct ud, mnemonic) p
 
 -- | Another pointer tag.
-data UD_operand
+data Operand
 
-get_operand1, get_operand2, get_operand3 :: Ptr UD_t -> Ptr UD_operand
+get_operand1, get_operand2, get_operand3 :: Ptr UD_t -> Ptr Operand
 get_operand1 = (#ptr struct ud, operand[0])
 get_operand2 = (#ptr struct ud, operand[1])
 get_operand3 = (#ptr struct ud, operand[2])
 
-get_type, get_base, get_index :: Ptr UD_operand -> IO UD_type
+get_type, get_base, get_index :: Ptr Operand -> IO UD_type
 get_type  = (#peek struct ud_operand, type)
 get_base  = (#peek struct ud_operand, base)
 get_index = (#peek struct ud_operand, index)
 
-get_size, get_offset, get_scale :: Ptr UD_operand -> IO (#type uint8_t)
+get_size, get_offset, get_scale :: Ptr Operand -> IO (#type uint8_t)
 get_size   = (#peek struct ud_operand, size)
 get_offset = (#peek struct ud_operand, offset)
 get_scale  = (#peek struct ud_operand, scale)
 
-get_lval_u8  :: Ptr UD_operand -> IO Word8
+get_lval_u8  :: Ptr Operand -> IO Word8
 get_lval_u8  = (#peek struct ud_operand, lval.ubyte)
-get_lval_u16 :: Ptr UD_operand -> IO Word16
+get_lval_u16 :: Ptr Operand -> IO Word16
 get_lval_u16 = (#peek struct ud_operand, lval.uword)
-get_lval_u32 :: Ptr UD_operand -> IO Word32
+get_lval_u32 :: Ptr Operand -> IO Word32
 get_lval_u32 = (#peek struct ud_operand, lval.udword)
-get_lval_u64 :: Ptr UD_operand -> IO Word64
+get_lval_u64 :: Ptr Operand -> IO Word64
 get_lval_u64 = (#peek struct ud_operand, lval.uqword)
 
-get_lval_s8  :: Ptr UD_operand -> IO Int8
+get_lval_s8  :: Ptr Operand -> IO Int8
 get_lval_s8  = (#peek struct ud_operand, lval.sbyte)
-get_lval_s16 :: Ptr UD_operand -> IO Int16
+get_lval_s16 :: Ptr Operand -> IO Int16
 get_lval_s16 = (#peek struct ud_operand, lval.sword)
-get_lval_s32 :: Ptr UD_operand -> IO Int32
+get_lval_s32 :: Ptr Operand -> IO Int32
 get_lval_s32 = (#peek struct ud_operand, lval.sdword)
-get_lval_s64 :: Ptr UD_operand -> IO Int64
+get_lval_s64 :: Ptr Operand -> IO Int64
 get_lval_s64 = (#peek struct ud_operand, lval.sqword)
 
-get_lval_ptr :: Ptr UD_operand -> IO (Word16, Word32)
+get_lval_ptr :: Ptr Operand -> IO (Word16, Word32)
 get_lval_ptr p = liftM2 (,) ((#peek struct ud_operand, lval.ptr.seg) p)
                             ((#peek struct ud_operand, lval.ptr.off) p)
 
