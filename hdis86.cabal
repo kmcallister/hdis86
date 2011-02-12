@@ -14,6 +14,10 @@ description:
 extra-source-files:
     examples/fixme.hs
 
+flag builtin-udis86
+  default: True
+  description: Compile and link a bundled copy of udis86 as part of hdis86.
+
 library
   exposed-modules:  
       Hdis86
@@ -28,4 +32,16 @@ library
       base       >= 3 && < 5
     , containers >= 0.3
     , bytestring >= 0.9
-  extra-libraries: udis86
+
+  if flag(builtin-udis86)
+    include-dirs: udis86-1.7
+    c-sources:
+      udis86-1.7/libudis86/decode.c
+      udis86-1.7/libudis86/syn-att.c
+      udis86-1.7/libudis86/udis86.c
+      udis86-1.7/libudis86/input.c
+      udis86-1.7/libudis86/syn.c
+      udis86-1.7/libudis86/itab.c
+      udis86-1.7/libudis86/syn-intel.c
+  else
+    extra-libraries: udis86
