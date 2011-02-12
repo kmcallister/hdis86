@@ -24,22 +24,13 @@ import Data.Data     ( Data )
 
 import Control.Applicative
 import Data.Word
-import Data.Function
 
 import System.IO.Unsafe ( unsafePerformIO )
 
 import qualified Data.ByteString as BS
 
 disWith :: (UD -> IO a) -> Config -> BS.ByteString -> [a]
-disWith get cfg bs = unsafePerformIO $ do
-  ud <- I.newUD
-  I.setInputBuffer ud bs
-  I.setConfig      ud cfg
-  fix $ \loop -> do
-    n <- I.disassemble ud
-    if n > 0
-      then liftA2 (:) (get ud) loop
-      else return []
+disWith f cfg bs = unsafePerformIO $ I.disassemble f cfg bs
 
 -- | Disassemble machine code.
 disassemble :: Config -> BS.ByteString -> [Instruction]

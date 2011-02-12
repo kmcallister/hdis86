@@ -22,13 +22,14 @@ module Hdis86.IO
   ( -- * Instances
     UD
   , newUD
+  , disassemble
 
     -- * Input sources
   , setInputBuffer
   , InputHook, setInputHook
 
     -- * Disassembly
-  , disassemble, skip, setIP
+  , advance, skip, setIP
 
     -- * Inspecting the output
   , getInstruction
@@ -55,6 +56,7 @@ import Foreign.C.String
 import Control.Applicative hiding ( Const )
 import Control.Monad
 import Data.Maybe
+import Data.Function
 
 import qualified Data.ByteString          as BS
 import Data.ByteString ( ByteString )
@@ -200,8 +202,24 @@ setConfig ud Config{..} = do
 -- | Disassemble the next instruction and return its length in bytes.
 --
 -- Returns zero if there are no more instructions.
-disassemble :: UD -> IO Word
-disassemble = (fromIntegral <$>) . flip withUDPtr C.disassemble
+advance :: UD -> IO Word
+advance = (fromIntegral <$>) . flip withUDPtr C.disassemble
+
+-- | A convenience function which disassembles an entire
+-- @'ByteString'@ using a fresh @'UD'@ instance.
+--
+-- At each instruction the user-specified action is performed,
+-- and the results are collected.
+disassemble :: (UD -> IO a) -> Config -> ByteString -> IO [a]
+disassemble get cfg bs = do
+  ud <- newUD
+  setInputBuffer ud bs
+  setConfig      ud cfg
+  fix $ \loop -> do
+    n <- advance ud
+    if n > 0
+      then liftA2 (:) (get ud) loop
+      else return []
 
 -- | Get the length of the current instruction in bytes.
 getLength :: UD -> IO Word
