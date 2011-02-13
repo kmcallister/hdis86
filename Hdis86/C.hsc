@@ -68,7 +68,7 @@ foreign import ccall "ud_set_syntax"
   set_syntax :: Ptr UD_t -> FunPtr Translator -> IO ()
 
 foreign import ccall "ud_set_vendor"
-  set_vendor :: Ptr UD_t -> CUInt -> IO ()
+  set_vendor :: Ptr UD_t -> UD_vendor -> IO ()
 
 foreign import ccall "ud_disassemble"
   disassemble :: Ptr UD_t -> IO CUInt
