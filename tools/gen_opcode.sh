@@ -1,7 +1,9 @@
-#!/bin/sh
+#!/bin/sh -e
 
 if [ -z "$1" ]; then
-  echo "Usage: $0 path/to/udis86-1.x/" >&2
+  echo "Usage: $0 path/to/udis86-1.x/libudis86/itab.h" >&2
+  echo >&2
+  echo "Outputs the generated Opcode.hs on standard out." >&2
   exit 1
 fi
 
@@ -16,12 +18,11 @@ module Hdis86.Internal.Opcode where
 import Data.Typeable ( Typeable )
 import Data.Data ( Data )
 
+data Opcode
 EOF
 
-echo "data Opcode"
-
 PFX=" ="
-grep '^  UD_' $1/libudis86/itab.h | sed 's/^  UD_//; s/,//' | \
+grep '^  UD_' "$1" | sed 's/^  UD_//; s/,//' | \
   while read inst; do
     echo "$PFX $inst"
     PFX=" |"
