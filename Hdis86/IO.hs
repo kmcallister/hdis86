@@ -27,6 +27,7 @@ module Hdis86.IO
     -- * Input sources
   , setInputBuffer
   , InputHook, setInputHook
+  , unsetInput
 
     -- * Disassembly
   , advance, skip, setIP
@@ -42,6 +43,9 @@ module Hdis86.IO
 
     -- * Callbacks
   , setCallback
+
+    -- * Unsafe operations
+  , unsafeSetInputPtr
   ) where
 
 import qualified Hdis86.C as C
@@ -70,6 +74,7 @@ data Input
   = InNone
   | InHook (FunPtr C.InputHook)
   | InBuf  (ForeignPtr Word8)
+  | InPtr
 
 data XlatType
   = XlBuiltin
@@ -138,11 +143,48 @@ setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
 
 -- FIXME: setInputFile
 
+-- | Set up the @'UD'@ instance to read directly from memory.
+--
+-- Given are a pointer to a memory region, and the length of that region.
+--
+-- This is an unsafe operation because the contents of the memory region
+-- might change, especially if it's part of the heap managed by GHC's
+-- garbage collector.
+--
+-- You are responsible for ensuring that the memory pointed to does not
+-- change or become invalid until another input sourec is seleceted.
+-- You cannot rely on the garbage collection of the @'UD'@ value,
+-- since finalizers may run arbitrarily long after the value becomes
+-- unreachable.
+--
+-- It should be safe to use this on the static code segment of your
+-- process, which is useful when your Haskell program needs to
+-- disassemble itself.
+unsafeSetInputPtr :: UD -> Ptr Word8 -> Word -> IO ()
+unsafeSetInputPtr (UD s) ptr len = modifyMVar_ s $ \st@State{udPtr} -> do
+  C.set_input_buffer udPtr (castPtr ptr) (fromIntegral len)
+  setInput InPtr st
+
+-- | Clear any previous input source setting.
+--
+-- This allows the @'UD'@ instance to free any resources associated with
+-- the input source.  Those resources would be freed automatically after
+-- the @'UD'@ value becomes unreachable, but you can use @'unsetInput'@
+-- to force this to happen earlier.
+unsetInput :: UD -> IO ()
+unsetInput (UD s) = modifyMVar_ s $ \st@State{udPtr} -> do
+  C.set_input_buffer udPtr nullPtr 0
+  setInput InNone st
+
 -- | Set up the @'UD'@ instance to read machine code from a @'ByteString'@.
 --
 -- This library does not copy the contents of the @'ByteString'@.
 -- It will hold onto the value until another input source is selected,
 -- or until the @'UD'@ value becomes unreachable.
+--
+-- This means that @'setInputBuffer'@ is both safe and efficient, but it
+-- may inhibit garbage collection of a larger @'ByteString'@ containing
+-- the input.  To prevent this, use @ByteString.@@'BS.copy'@.
 setInputBuffer :: UD -> ByteString -> IO ()
 setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
   let (ptr, off, len) = BS.toForeignPtr bs
@@ -176,6 +218,9 @@ setSyntax (UD s) = modifyMVar_ s . setXlat XlBuiltin . f where
 
 -- no point passing the UD since we can close over it easily
 -- | Register an action to be performed after each instruction is disassembled.
+--
+-- This is not necessary for using the library.  An alternative is to perform
+-- the action in a loop which also calls @'advance'@.
 --
 -- This disables updating of the string returned by @'getAssembly'@.
 setCallback :: UD -> IO () -> IO ()
