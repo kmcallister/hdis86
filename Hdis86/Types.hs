@@ -148,6 +148,9 @@ data XMMRegister
   deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
 -- | An @x86@ \/ @amd64@ CPU instruction.
+--
+-- The destination @'Operand'@ (if any) will precede the source
+-- @'Operand'@(s).
 data Instruction
   = Inst [Prefix] Opcode [Operand]
   deriving (Eq, Ord, Show, Read, Typeable, Data)
