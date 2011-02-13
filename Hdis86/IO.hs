@@ -247,7 +247,7 @@ setConfig ud Config{..} = do
 -- | Disassemble the next instruction and return its length in bytes, or
 -- @'Nothing'@ if there are no more instructions.
 advance :: UD -> IO (Maybe Word)
-advance = (f <$>) . flip withUDPtr C.disassemble where
+advance = fmap f . flip withUDPtr C.disassemble where
   f 0 = Nothing
   f n = Just $ fromIntegral n
 
@@ -269,7 +269,7 @@ disassemble get cfg bs = do
 
 -- | Get the length of the current instruction in bytes.
 getLength :: UD -> IO Word
-getLength = (fromIntegral <$>) . flip withUDPtr C.insn_len
+getLength = fmap fromIntegral . flip withUDPtr C.insn_len
 
 -- | Get the offset of the current instruction from FIXME.
 getOffset :: UD -> IO Word64
@@ -336,12 +336,12 @@ getLvalS _      uop = C.get_lval_s64 uop
 
 opDecode :: UDTM (Ptr C.Operand -> IO Operand)
 opDecode = makeUDTM
-  [ (C.udOpMem,   (Mem   <$>) . getMem)
-  , (C.udOpReg,   (Reg   <$>) . getReg C.get_base)
-  , (C.udOpPtr,   (Ptr   <$>) . getPtr)
-  , (C.udOpImm,   (Imm   <$>) . getImm getLvalU)
-  , (C.udOpJimm,  (Jump  <$>) . getImm getLvalS)
-  , (C.udOpConst, (Const <$>) . getImm getLvalU) ] where
+  [ (C.udOpMem,   fmap Mem   . getMem)
+  , (C.udOpReg,   fmap Reg   . getReg C.get_base)
+  , (C.udOpPtr,   fmap Ptr   . getPtr)
+  , (C.udOpImm,   fmap Imm   . getImm getLvalU)
+  , (C.udOpJimm,  fmap Jump  . getImm getLvalS)
+  , (C.udOpConst, fmap Const . getImm getLvalU) ] where
 
     getReg f uop = register <$> f uop
 
