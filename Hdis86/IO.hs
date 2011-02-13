@@ -152,9 +152,9 @@ setInputHook (UD s) f = modifyMVar_ s $ \st@State{udPtr} -> do
 -- garbage collector.
 --
 -- You are responsible for ensuring that the memory pointed to does not
--- change or become invalid until another input sourec is seleceted.
--- You cannot rely on the garbage collection of the @'UD'@ value,
--- since finalizers may run arbitrarily long after the value becomes
+-- change or become invalid until another input source is selected.
+-- You cannot rely on garbage collection of the @'UD'@ value, because
+-- finalization may be delayed arbitrarily long after the value becomes
 -- unreachable.
 --
 -- It should be safe to use this on the static code segment of your
