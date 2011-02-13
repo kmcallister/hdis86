@@ -12,7 +12,8 @@ cabal-version:       >=1.2
 description:
   FIXME
 extra-source-files:
-    examples/fixme.hs
+    tools/hdcli.hs
+  , tools/gen_opcode.sh
 
 flag builtin-udis86
   default: True
