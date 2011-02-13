@@ -100,7 +100,7 @@ setInput inpt st@State{udInput} = do
   return $ st { udInput = inpt }
 
 setXlat :: XlatType -> FunPtr C.Translator -> State -> IO State
-setXlat ty fp st@State{..} = do
+setXlat ty fp st@State{udPtr, udXlat, udXlatType} = do
   case udXlatType of
     XlCustom -> freeHaskellFunPtr udXlat
     _ -> return ()
@@ -108,7 +108,7 @@ setXlat ty fp st@State{..} = do
   return $ st { udXlatType = ty, udXlat = fp }
 
 finalizeState :: MVar State -> IO ()
-finalizeState = flip withMVar $ \st@State{..} -> do
+finalizeState = flip withMVar $ \st@State{udPtr} -> do
   _ <- setInput InNone st
   _ <- setXlat  XlBuiltin nullFunPtr st
   free udPtr
@@ -136,7 +136,7 @@ type InputHook = IO (Maybe Word8)
 
 -- | Register an @'InputHook'@ to provide machine code to disassemble.
 setInputHook :: UD -> InputHook -> IO ()
-setInputHook (UD s) f = modifyMVar_ s $ \st@State{..} -> do
+setInputHook (UD s) f = modifyMVar_ s $ \st@State{udPtr} -> do
   fp <- C.wrap_InputHook (maybe C.eoi fromIntegral <$> f)
   C.set_input_hook udPtr fp
   setInput (InHook fp) st
@@ -186,7 +186,7 @@ unsetInput (UD s) = modifyMVar_ s $ \st@State{udPtr} -> do
 -- may inhibit garbage collection of a larger @'ByteString'@ containing
 -- the input.  To prevent this, use @ByteString.@@'BS.copy'@.
 setInputBuffer :: UD -> ByteString -> IO ()
-setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{..} -> do
+setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{udPtr} -> do
   let (ptr, off, len) = BS.toForeignPtr bs
   C.set_input_buffer udPtr
     (unsafeForeignPtrToPtr ptr `plusPtr` off)
