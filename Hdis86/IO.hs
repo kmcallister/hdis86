@@ -244,11 +244,12 @@ setConfig ud Config{..} = do
   setSyntax  ud cfgSyntax
   setIP      ud cfgOrigin
 
--- | Disassemble the next instruction and return its length in bytes.
---
--- Returns zero if there are no more instructions.
-advance :: UD -> IO Word
-advance = (fromIntegral <$>) . flip withUDPtr C.disassemble
+-- | Disassemble the next instruction and return its length in bytes, or
+-- @'Nothing'@ if there are no more instructions.
+advance :: UD -> IO (Maybe Word)
+advance = (f <$>) . flip withUDPtr C.disassemble where
+  f 0 = Nothing
+  f n = Just $ fromIntegral n
 
 -- | A convenience function which disassembles an entire
 -- @'ByteString'@ using a fresh @'UD'@ instance.
@@ -262,9 +263,9 @@ disassemble get cfg bs = do
   setConfig      ud cfg
   fix $ \loop -> do
     n <- advance ud
-    if n > 0
-      then liftA2 (:) (get ud) loop
-      else return []
+    case n of
+      Just _  -> liftA2 (:) (get ud) loop
+      Nothing -> return []
 
 -- | Get the length of the current instruction in bytes.
 getLength :: UD -> IO Word
