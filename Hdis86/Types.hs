@@ -150,7 +150,7 @@ data XMMRegister
 -- | An x86 \/ AMD64 CPU instruction.
 --
 -- The destination @'Operand'@ (if any) will precede the source
--- @'Operand'@.
+-- @'Operand'@s.
 data Instruction
   = Inst [Prefix] Opcode [Operand]
   deriving (Eq, Ord, Show, Read, Typeable, Data)

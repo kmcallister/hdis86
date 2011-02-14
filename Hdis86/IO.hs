@@ -22,7 +22,6 @@ module Hdis86.IO
   ( -- * Instances
     UD
   , newUD
-  , disassemble
 
     -- * Input sources
   , setInputBuffer
@@ -31,6 +30,7 @@ module Hdis86.IO
 
     -- * Disassembly
   , advance, skip, setIP
+  , run
 
     -- * Inspecting the output
   , getInstruction
@@ -253,20 +253,18 @@ advance = fmap f . flip withUDPtr C.disassemble where
   f 0 = Nothing
   f n = Just $ fromIntegral n
 
--- | A convenience function which disassembles an entire
--- @'ByteString'@ using a fresh @'UD'@ instance.
+-- | A convenience function which calls @'advance'@ repeatedly
+-- while instructions remain.
 --
 -- At each instruction the user-specified action is performed,
--- and the results are collected.
-disassemble :: (UD -> IO a) -> Config -> ByteString -> IO [a]
-disassemble get cfg bs = do
-  ud <- newUD
-  setInputBuffer ud bs
-  setConfig      ud cfg
-  fix $ \loop -> do
+-- and the results are collected.  The @'UD'@ value is
+-- not passed as an argument, but it's easy enough to close
+-- over it when defining your action.
+run :: UD -> IO a -> IO [a]
+run ud get = fix $ \loop -> do
     n <- advance ud
     case n of
-      Just _  -> liftA2 (:) (get ud) loop
+      Just _  -> liftA2 (:) get loop
       Nothing -> return []
 
 -- | Get the length of the current instruction in bytes.

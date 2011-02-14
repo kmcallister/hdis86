@@ -29,8 +29,13 @@ import System.IO.Unsafe ( unsafePerformIO )
 
 import qualified Data.ByteString as BS
 
+-- internal only; this isn't referentially transparent in general
 disWith :: (UD -> IO a) -> Config -> BS.ByteString -> [a]
-disWith f cfg bs = unsafePerformIO $ I.disassemble f cfg bs
+disWith f cfg bs = unsafePerformIO $ do
+  ud <- I.newUD
+  I.setInputBuffer ud bs
+  I.setConfig      ud cfg
+  I.run            ud (f ud)
 
 -- | Disassemble machine code.
 --
