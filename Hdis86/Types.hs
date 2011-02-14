@@ -70,7 +70,7 @@ bitsInWord Bits48 = 48
 bitsInWord Bits64 = 64
 bitsInWord Bits80 = 80
 
--- | An @x86@ \/ @amd64@ register.
+-- | An x86 \/ AMD64 register.
 data Register
   = RegNone                 -- ^ No register specified.
   | Reg8   GPR Half         -- ^ Either 8-bit half of the low 16 bits
@@ -147,10 +147,10 @@ data XMMRegister
   | XMM12 | XMM13 | XMM14 | XMM15
   deriving (Eq, Ord, Show, Read, Typeable, Data, Enum, Bounded)
 
--- | An @x86@ \/ @amd64@ CPU instruction.
+-- | An x86 \/ AMD64 CPU instruction.
 --
 -- The destination @'Operand'@ (if any) will precede the source
--- @'Operand'@(s).
+-- @'Operand'@.
 data Instruction
   = Inst [Prefix] Opcode [Operand]
   deriving (Eq, Ord, Show, Read, Typeable, Data)

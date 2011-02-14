@@ -1,0 +1,11 @@
+hdis86 is a Haskell interface to the udis86 disassembler, which decodes machine
+code for 16-, 32-, and 64-bit x86 and x86-64 / AMD64 processors.  Most of the
+documentation is provided in the form of Haddock-generated HTML, which can be
+produced by running
+
+  $ cabal configure && cabal haddock --hyperlink-source
+
+See also the files in doc/ and the Hackage page at
+http://hackage.haskell.org/package/hdis86 .
+
+The udis86 website is http://udis86.sourceforge.net/ .

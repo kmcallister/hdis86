@@ -1,0 +1,7 @@
+If you've built udis86 with a custom x86optable.xml, or you're using a version
+other than 1.7, you may need to regenerate Hdis86/Internal/Opcode.hs to keep
+it synchronized.
+
+To do this, run the script tools/gen_opcode.sh, passing it the path to
+libudis86/itab.h as a command-line argument.  It will produce a suitable
+Opcode.hs on standard output.

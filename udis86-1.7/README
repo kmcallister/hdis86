@@ -1,0 +1,16 @@
+This directory contains a subset of the files from udis86-1.7.tar.gz, available
+at http://udis86.sourceforge.net/ .
+
+udis86 is copyright (c) 2002, 2003, 2004, 2005, 2006, 2007, 2008 Vivek Thampi.
+
+The original archive udis86-1.7.tar.gz did not include a LICENSE file.  The
+project website at http://udis86.sourceforge.net/ contained this text as of
+February 13, 2011:
+
+"License
+
+Udis86 is an open source project, and is distributed under the terms of the BSD License."
+
+As of the same date, the Git repository at
+git://udis86.git.sourceforge.net/gitroot/udis86/udis86 contained the text which
+you will find in the file "LICENSE" in this directory.

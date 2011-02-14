@@ -2,6 +2,14 @@
     RecordWildCards #-}
 module Main(main) where
 
+{- This is an example program emulating most of the functionality of udis86's
+   udcli.  It additionally provides a command-line option "-dump", which will
+   print the Haskell 'Instruction' data structures to standard output.
+
+   Compile with:
+     $ ghc --make -O hdcli.hs
+-}
+
 import Hdis86
 
 import System.Environment ( getArgs )

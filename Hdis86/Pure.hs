@@ -33,6 +33,9 @@ disWith :: (UD -> IO a) -> Config -> BS.ByteString -> [a]
 disWith f cfg bs = unsafePerformIO $ I.disassemble f cfg bs
 
 -- | Disassemble machine code.
+--
+-- Common values for @'Config'@ such as @'intel32'@ or @'amd64'@
+-- are provided in @'Hdis86.Types'@.
 disassemble :: Config -> BS.ByteString -> [Instruction]
 disassemble = disWith I.getInstruction
 

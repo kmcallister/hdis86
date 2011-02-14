@@ -16,8 +16,8 @@
 --
 -- This module is fully thread-safe: any number of threads
 -- may manipulate one or several @'UD'@ objects at the same
--- time.
-
+-- time.  The individual operations exported by this module
+-- are guaranteed to be atomic.
 module Hdis86.IO
   ( -- * Instances
     UD
@@ -141,7 +141,9 @@ setInputHook (UD s) f = modifyMVar_ s $ \st@State{udPtr} -> do
   C.set_input_hook udPtr fp
   setInput (InHook fp) st
 
--- FIXME: setInputFile
+-- no wrapper for C.set_input_file, as I have not found a good way to
+-- make a C FILE* from Haskell code, and file reading is also possible
+-- through setInputHook.
 
 -- | Set up the @'UD'@ instance to read directly from memory.
 --
@@ -271,7 +273,8 @@ disassemble get cfg bs = do
 getLength :: UD -> IO Word
 getLength = fmap fromIntegral . flip withUDPtr C.insn_len
 
--- | Get the offset of the current instruction from FIXME.
+-- | Get the offset of the current instruction.  This value is set
+-- by @'getIP'@ and updated after each call to @'advance'@.
 getOffset :: UD -> IO Word64
 getOffset = flip withUDPtr C.insn_off
 
