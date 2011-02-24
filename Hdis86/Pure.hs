@@ -35,12 +35,14 @@ disWith f cfg bs = unsafePerformIO $ do
   ud <- I.newUD
   I.setInputBuffer ud bs
   I.setConfig      ud cfg
-  I.run            ud (f ud)
+  I.unsafeRunLazy  ud (f ud)
 
 -- | Disassemble machine code.
 --
 -- Common values for @'Config'@ such as @'intel32'@ or @'amd64'@
 -- are provided in @'Hdis86.Types'@.
+--
+-- The output is produced lazily.
 disassemble :: Config -> BS.ByteString -> [Instruction]
 disassemble = disWith I.getInstruction
 
@@ -55,6 +57,8 @@ data Metadata = Metadata
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | Disassemble machine code, with full metadata.
+--
+-- The output is produced lazily.
 disassembleMetadata :: Config -> BS.ByteString -> [Metadata]
 disassembleMetadata = disWith $ \ud -> Metadata
   <$> I.getOffset      ud

@@ -46,6 +46,7 @@ module Hdis86.IO
 
     -- * Unsafe operations
   , unsafeSetInputPtr
+  , unsafeRunLazy
   ) where
 
 import qualified Hdis86.C as C
@@ -65,6 +66,8 @@ import Data.Function
 import qualified Data.ByteString          as BS
 import Data.ByteString ( ByteString )
 import qualified Data.ByteString.Internal as BS
+
+import System.IO.Unsafe ( unsafeInterleaveIO )
 
 -- We keep track of the current input source and
 -- the current translator so that these resources
@@ -253,6 +256,14 @@ advance = fmap f . flip withUDPtr C.disassemble where
   f 0 = Nothing
   f n = Just $ fromIntegral n
 
+-- implementation of run and unsafeRunLazy
+runImpl :: (IO [a] -> IO [a]) -> UD -> IO a -> IO [a]
+runImpl wrap ud get = fix $ \loop -> do
+  n <- advance ud
+  case n of
+    Just _  -> liftA2 (:) get (wrap loop)
+    Nothing -> return []
+
 -- | A convenience function which calls @'advance'@ repeatedly
 -- while instructions remain.
 --
@@ -261,11 +272,14 @@ advance = fmap f . flip withUDPtr C.disassemble where
 -- not passed as an argument, but it's easy enough to close
 -- over it when defining your action.
 run :: UD -> IO a -> IO [a]
-run ud get = fix $ \loop -> do
-    n <- advance ud
-    case n of
-      Just _  -> liftA2 (:) get loop
-      Nothing -> return []
+run = runImpl id
+
+-- | Lazy version of @'run'@; calls into the C library as
+-- elements of its result list are forced.
+--
+-- This has roughly the same caveats as @'unsafeInterleaveIO'@.
+unsafeRunLazy :: UD -> IO a -> IO [a]
+unsafeRunLazy = runImpl unsafeInterleaveIO
 
 -- | Get the length of the current instruction in bytes.
 getLength :: UD -> IO Word
