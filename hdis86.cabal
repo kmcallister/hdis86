@@ -44,6 +44,17 @@ description:
 extra-source-files:
     tools/hdcli.hs
   , tools/gen_opcode.sh
+  , udis86-1.7/libudis86/decode.h
+  , udis86-1.7/libudis86/input.h
+  , udis86-1.7/libudis86/syn.h
+  , udis86-1.7/libudis86/extern.h
+  , udis86-1.7/libudis86/itab.h
+  , udis86-1.7/libudis86/types.h
+  , udis86-1.7/udis86.h
+  , udis86-1.7/LICENSE
+  , udis86-1.7/README
+  , README
+  , doc/customizing.txt
 
 flag external-udis86
   default: False
