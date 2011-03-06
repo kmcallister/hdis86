@@ -5,6 +5,8 @@ produced by running
 
   $ cabal configure && cabal haddock --hyperlink-source
 
+This will produce HTML documentation under dist/doc/html/hdis86.
+
 See also the files in doc/ and the Hackage page at
 http://hackage.haskell.org/package/hdis86 .
 

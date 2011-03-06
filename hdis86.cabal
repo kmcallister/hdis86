@@ -39,7 +39,7 @@ description:
   .
   This code is available on GitHub at <https://github.com/kmcallister/hdis86>.
   .
-  The @udis86@ project website is at <http://udis86.sourceforge.net/>.
+  The @udis86@ project website is located at <http://udis86.sourceforge.net/>.
 
 extra-source-files:
     tools/hdcli.hs

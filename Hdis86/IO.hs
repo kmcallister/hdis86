@@ -119,7 +119,7 @@ finalizeState = flip withMVar $ \st@State{udPtr} -> do
 -- | Create a new disassembler instance.
 --
 -- There is no @deleteUD@.  Associated resources will be freed automatically
--- when this @'UD'@ value becomes unreachable.
+-- after this @'UD'@ value becomes unreachable.
 newUD :: IO UD
 newUD = do
   p <- mallocBytes C.sizeof_ud_t
