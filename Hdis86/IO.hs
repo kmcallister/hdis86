@@ -64,7 +64,6 @@ import Data.Maybe
 import Data.Function
 
 import qualified Data.ByteString          as BS
-import Data.ByteString ( ByteString )
 import qualified Data.ByteString.Internal as BS
 
 import System.IO.Unsafe ( unsafeInterleaveIO )
@@ -181,16 +180,16 @@ unsetInput (UD s) = modifyMVar_ s $ \st@State{udPtr} -> do
   C.set_input_buffer udPtr nullPtr 0
   setInput InNone st
 
--- | Set up the @'UD'@ instance to read machine code from a @'ByteString'@.
+-- | Set up the @'UD'@ instance to read machine code from a @'BS.ByteString'@.
 --
--- This library does not copy the contents of the @'ByteString'@.
+-- This library does not copy the contents of the @'BS.ByteString'@.
 -- It will hold onto the value until another input source is selected,
 -- or until the @'UD'@ value becomes unreachable.
 --
 -- This means that @'setInputBuffer'@ is both safe and efficient, but it
--- may inhibit garbage collection of a larger @'ByteString'@ containing
+-- may inhibit garbage collection of a larger @'BS.ByteString'@ containing
 -- the input.  To prevent this, use @ByteString.@@'BS.copy'@.
-setInputBuffer :: UD -> ByteString -> IO ()
+setInputBuffer :: UD -> BS.ByteString -> IO ()
 setInputBuffer (UD s) bs = modifyMVar_ s $ \st@State{udPtr} -> do
   let (ptr, off, len) = BS.toForeignPtr bs
   C.set_input_buffer udPtr
@@ -295,10 +294,10 @@ getHex :: UD -> IO String
 getHex = flip withUDPtr $ \p ->
   C.insn_hex p >>= peekCString
 
--- | Get the current instruction's machine code as a @'ByteString'@.
+-- | Get the current instruction's machine code as a @'BS.ByteString'@.
 --
 -- The bytes are copied out of internal state.
-getBytes :: UD -> IO ByteString
+getBytes :: UD -> IO BS.ByteString
 getBytes = flip withUDPtr $ \p -> do
   len <- C.insn_len p
   ptr <- C.insn_ptr p
