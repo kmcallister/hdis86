@@ -33,7 +33,7 @@ regMap = makeUDTM
   , (udRCh,   Reg8 RCX H)
   , (udRDh,   Reg8 RDX H)
   , (udRBh,   Reg8 RBX H)
-  , (udRSpl,  Reg8 RSI L)
+  , (udRSpl,  Reg8 RSP L)
   , (udRBpl,  Reg8 RBP L)
   , (udRSil,  Reg8 RSI L)
   , (udRDil,  Reg8 RDI L)
