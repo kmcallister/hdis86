@@ -1,5 +1,8 @@
 {-# LANGUAGE
-    DeriveDataTypeable #-}
+    DeriveDataTypeable
+  , ScopedTypeVariables #-}
+{-# OPTIONS_GHC
+    -fno-warn-orphans #-}
 
 -- | Types provided by the disassembler.
 module Hdis86.Types
@@ -33,8 +36,10 @@ import Data.Typeable ( Typeable )
 import Data.Data     ( Data )
 import Data.Word
 import Data.Int
+import Control.Applicative hiding ( Const )
 
-import qualified Text.Read as R
+import qualified Text.Read       as R
+import qualified Test.QuickCheck as Q
 
 -- | Machine word sizes.
 --
@@ -250,3 +255,76 @@ intel32 = Config Intel Mode32 SyntaxNone 0
 intel64 = Config Intel Mode64 SyntaxNone 0
 amd32   = Config AMD   Mode32 SyntaxNone 0
 amd64   = Config AMD   Mode64 SyntaxNone 0
+
+
+-- QuickCheck instances
+
+arbEnum :: forall a. (Enum a, Bounded a) => Q.Gen a
+arbEnum = toEnum <$> Q.choose (fromEnum lb, fromEnum ub) where
+  lb, ub :: a
+  (lb, ub) = (minBound, maxBound)
+
+instance Q.Arbitrary GPR             where arbitrary = arbEnum
+instance Q.Arbitrary Half            where arbitrary = arbEnum
+instance Q.Arbitrary Segment         where arbitrary = arbEnum
+instance Q.Arbitrary ControlRegister where arbitrary = arbEnum
+instance Q.Arbitrary DebugRegister   where arbitrary = arbEnum
+instance Q.Arbitrary MMXRegister     where arbitrary = arbEnum
+instance Q.Arbitrary X87Register     where arbitrary = arbEnum
+instance Q.Arbitrary XMMRegister     where arbitrary = arbEnum
+instance Q.Arbitrary WordSize        where arbitrary = arbEnum
+instance Q.Arbitrary Vendor          where arbitrary = arbEnum
+instance Q.Arbitrary CPUMode         where arbitrary = arbEnum
+instance Q.Arbitrary Syntax          where arbitrary = arbEnum
+instance Q.Arbitrary Opcode          where arbitrary = arbEnum
+
+instance Q.Arbitrary Register where
+  arbitrary = Q.oneof [
+      pure RegNone
+    , pure RegIP
+    , Reg8   <$> Q.arbitrary <*> Q.arbitrary
+    , Reg16  <$> Q.arbitrary
+    , Reg32  <$> Q.arbitrary
+    , Reg64  <$> Q.arbitrary
+    , RegSeg <$> Q.arbitrary
+    , RegCtl <$> Q.arbitrary
+    , RegDbg <$> Q.arbitrary
+    , RegMMX <$> Q.arbitrary
+    , RegX87 <$> Q.arbitrary
+    , RegXMM <$> Q.arbitrary ]
+
+instance (Q.Arbitrary t) => Q.Arbitrary (Immediate t) where
+  arbitrary = Immediate <$> Q.arbitrary <*> Q.arbitrary
+
+instance Q.Arbitrary Pointer where
+  arbitrary = Pointer <$> Q.arbitrary <*> Q.arbitrary
+
+instance Q.Arbitrary Memory where
+  arbitrary = Memory <$> Q.arbitrary <*> Q.arbitrary <*> Q.arbitrary
+                     <*> Q.arbitrary <*> Q.arbitrary
+
+instance Q.Arbitrary Operand where
+  arbitrary = Q.oneof [
+      Mem   <$> Q.arbitrary
+    , Reg   <$> Q.arbitrary
+    , Ptr   <$> Q.arbitrary
+    , Imm   <$> Q.arbitrary
+    , Jump  <$> Q.arbitrary
+    , Const <$> Q.arbitrary ]
+
+instance Q.Arbitrary Prefix where
+  arbitrary = Q.oneof (
+    (Seg <$> Q.arbitrary)
+    : map pure [Rex, OperSize, AddrSize, Lock, Rep, RepE, RepNE] )
+
+instance Q.Arbitrary Instruction where
+  arbitrary = do
+    np <- Q.choose (0,3)
+    no <- Q.choose (0,3)
+    Inst <$> Q.vectorOf np Q.arbitrary
+         <*> Q.arbitrary
+         <*> Q.vectorOf no Q.arbitrary
+
+instance Q.Arbitrary Config where
+  arbitrary = Config <$> Q.arbitrary <*> Q.arbitrary
+                     <*> Q.arbitrary <*> Q.arbitrary
