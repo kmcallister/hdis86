@@ -153,9 +153,11 @@ data XMMRegister
 --
 -- The destination @'Operand'@ (if any) will precede the source
 -- @'Operand'@s.
-data Instruction
-  = Inst [Prefix] Opcode [Operand]
-  deriving (Eq, Ord, Typeable, Data)
+data Instruction = Inst
+  { inPrefixes :: [Prefix]
+  , inOpcode   :: Opcode
+  , inOperands :: [Operand]
+  } deriving (Eq, Ord, Typeable, Data)
 
 instance Show Instruction where
   showsPrec p (Inst pfx opc opr) = showParen (p >= 11) body
