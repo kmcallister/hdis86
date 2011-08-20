@@ -34,6 +34,8 @@ import Data.Data     ( Data )
 import Data.Word
 import Data.Int
 
+import qualified Text.Read as R
+
 -- | Machine word sizes.
 --
 -- Some fields, such as immediate operands, come in different
@@ -153,7 +155,22 @@ data XMMRegister
 -- @'Operand'@s.
 data Instruction
   = Inst [Prefix] Opcode [Operand]
-  deriving (Eq, Ord, Show, Read, Typeable, Data)
+  deriving (Eq, Ord, Typeable, Data)
+
+instance Show Instruction where
+  showsPrec p (Inst pfx opc opr) = showParen (p >= 11) body
+    where
+      body = foldr (.) id
+        [("Inst "++), showsPrec 11 pfx, (" "++),
+         showsPrec 11 opc, (" "++), showsPrec 11 opr]
+
+instance Read Instruction where
+  readsPrec d = R.readParen (d > 10) $ \r ->
+    [(Inst pfx opc opr, xd)
+      | ("Inst", xa) <- R.lex r
+      , (pfx, xb) <- readsPrec 11 xa
+      , (opc, xc) <- readsPrec 11 xb
+      , (opr, xd) <- readsPrec 11 xc]
 
 -- | Prefixes, used to modify an instruction.
 data Prefix
