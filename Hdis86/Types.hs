@@ -257,6 +257,12 @@ amd32   = Config AMD   Mode32 SyntaxNone 0
 amd64   = Config AMD   Mode64 SyntaxNone 0
 
 
+-- QuickCheck properties
+
+_prop_Instruction_ReadShow :: Instruction -> Bool
+_prop_Instruction_ReadShow i = read (show i) == i
+
+
 -- QuickCheck instances
 
 arbEnum :: forall a. (Enum a, Bounded a) => Q.Gen a
