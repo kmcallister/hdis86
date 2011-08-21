@@ -19,6 +19,9 @@ module Hdis86.Types
     -- * Word sizes
   , WordSize(..), wordSize, bitsInWord
 
+    -- * Instruction with metadata
+  , Metadata(..)
+
     -- * Configuration
   , Config(..)
   , Vendor(..), CPUMode(..), Syntax(..)
@@ -38,6 +41,7 @@ import Data.Word
 import Data.Int
 import Control.Applicative hiding ( Const )
 
+import qualified Data.ByteString as BS
 import qualified Text.Read       as R
 import qualified Test.QuickCheck as Q
 
@@ -220,6 +224,16 @@ data Pointer = Pointer
 data Immediate t = Immediate
   { iSize  :: WordSize  -- ^ Size of the field
   , iValue :: t         -- ^ Immediate value, e.g @'Int64'@ or @'Word64'@
+  } deriving (Eq, Ord, Show, Read, Typeable, Data)
+
+-- | An instruction with full metadata.
+data Metadata = Metadata
+  { mdOffset   :: Word64         -- ^ Offset of the start of this instruction
+  , mdLength   :: Word           -- ^ Length of this instruction in bytes
+  , mdHex      :: String         -- ^ Hexadecimal representation of this instruction
+  , mdBytes    :: BS.ByteString  -- ^ Bytes that make up this instruction
+  , mdAssembly :: String         -- ^ Assembly code for this instruction
+  , mdInst     :: Instruction    -- ^ The instruction itself
   } deriving (Eq, Ord, Show, Read, Typeable, Data)
 
 -- | CPU vendors, supporting slightly different instruction sets.

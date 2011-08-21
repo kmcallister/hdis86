@@ -1,6 +1,3 @@
-{-# LANGUAGE
-    DeriveDataTypeable #-}
-
 -- | Interface to the @udis86@ disassembler.
 --
 -- This is the simplest, most high-level interface.
@@ -18,12 +15,6 @@ module Hdis86.Pure
 import Hdis86.Types
 import Hdis86.IO ( UD )
 import qualified Hdis86.IO as I
-
-import Data.Typeable ( Typeable )
-import Data.Data     ( Data )
-
-import Control.Applicative
-import Data.Word
 
 import System.IO.Unsafe ( unsafePerformIO )
 
@@ -46,24 +37,8 @@ disWith f cfg bs = unsafePerformIO $ do
 disassemble :: Config -> BS.ByteString -> [Instruction]
 disassemble = disWith I.getInstruction
 
--- | An instruction with full metadata.
-data Metadata = Metadata
-  { mdOffset   :: Word64         -- ^ Offset of the start of this instruction
-  , mdLength   :: Word           -- ^ Length of this instruction in bytes
-  , mdHex      :: String         -- ^ Hexadecimal representation of this instruction
-  , mdBytes    :: BS.ByteString  -- ^ Bytes that make up this instruction
-  , mdAssembly :: String         -- ^ Assembly code for this instruction
-  , mdInst     :: Instruction    -- ^ The instruction itself
-  } deriving (Eq, Ord, Show, Read, Typeable, Data)
-
 -- | Disassemble machine code, with full metadata.
 --
 -- The output is produced lazily.
 disassembleMetadata :: Config -> BS.ByteString -> [Metadata]
-disassembleMetadata = disWith $ \ud -> Metadata
-  <$> I.getOffset      ud
-  <*> I.getLength      ud
-  <*> I.getHex         ud
-  <*> I.getBytes       ud
-  <*> I.getAssembly    ud
-  <*> I.getInstruction ud
+disassembleMetadata = disWith I.getMetadata

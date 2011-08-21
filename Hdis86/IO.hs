@@ -36,6 +36,7 @@ module Hdis86.IO
   , getInstruction
   , getLength, getOffset
   , getHex, getBytes, getAssembly
+  , getMetadata
 
     -- * Configuration
   , setConfig
@@ -310,6 +311,17 @@ getBytes = flip withUDPtr $ \p -> do
 getAssembly :: UD -> IO String
 getAssembly = flip withUDPtr $ \p ->
   C.insn_asm p >>= peekCString
+
+-- | Get all metadata about the current instruction,
+-- along with the instruction itself.
+getMetadata :: UD -> IO Metadata
+getMetadata ud = Metadata
+  <$> getOffset      ud
+  <*> getLength      ud
+  <*> getHex         ud
+  <*> getBytes       ud
+  <*> getAssembly    ud
+  <*> getInstruction ud
 
 -- | Skip the next /n/ bytes of the input.
 skip :: UD -> Word -> IO ()
