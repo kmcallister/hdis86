@@ -46,6 +46,7 @@ description:
 extra-source-files:
     tools/hdcli.hs
   , tools/gen_opcode.sh
+  , tools/test_lazy_bytestring.hs
   , udis86-1.7/libudis86/decode.h
   , udis86-1.7/libudis86/input.h
   , udis86-1.7/libudis86/syn.h
