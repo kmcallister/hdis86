@@ -8,7 +8,7 @@ author:              Keegan McAllister <mcallister.keegan@gmail.com>
 maintainer:          Keegan McAllister <mcallister.keegan@gmail.com>
 homepage:            https://github.com/kmcallister/hdis86
 build-type:          Simple
-cabal-version:       >=1.2
+cabal-version:       >=1.6
 description:
   @hdis86@ is an interface to the @udis86@ disassembler, which decodes machine
   code for 16-, 32-, and 64-bit x86  and x86-64 / AMD64 processors.  @hdis86@
@@ -92,3 +92,7 @@ library
       udis86-1.7/libudis86/syn.c
       udis86-1.7/libudis86/syn-att.c
       udis86-1.7/libudis86/syn-intel.c
+
+source-repository head
+    type:     git
+    location: git://github.com/kmcallister/hdis86.git
