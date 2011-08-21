@@ -2,8 +2,9 @@
 --
 -- Exports the simplest, most high-level interface.
 module Hdis86
-  ( module Hdis86.Types
-  , module Hdis86.Pure
+  ( disassemble
+  , disassembleMetadata
+  , module Hdis86.Types
   ) where
 
 import Hdis86.Types
