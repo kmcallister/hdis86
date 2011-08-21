@@ -30,7 +30,9 @@ description:
   .
   Many users can simply import @Hdis86@.
   .
-
+  The @Incremental@ module provides disassembly of lazy @ByteString@s, and a
+  function for building other incremental operations.
+  .
   By default, @hdis86@ will statically link a built-in copy of @udis86-1.7@,
   which is provided by its author under a similar BSD license.  See inside the
   tarball for more information.  If you have @udis86@ installed on your system,
@@ -65,6 +67,7 @@ library
       Hdis86
     , Hdis86.Types
     , Hdis86.Pure
+    , Hdis86.Incremental
     , Hdis86.IO
     , Hdis86.C
     , Hdis86.Internal.Opcode
