@@ -1,5 +1,5 @@
 name:                hdis86
-version:             0.1
+version:             0.2
 license:             BSD3
 license-file:        LICENSE
 synopsis:            Interface to the udis86 disassembler for x86 and x86-64 / AMD64
