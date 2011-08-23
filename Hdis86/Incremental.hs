@@ -1,8 +1,6 @@
 -- | Incremental pure disassembly.
-
 module Hdis86.Incremental
-  (
-    disassembleOne
+  ( disassembleOne
   , disassembleLazy
   ) where
 
