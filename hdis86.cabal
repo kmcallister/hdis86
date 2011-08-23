@@ -81,8 +81,9 @@ library
     , Hdis86.Incremental
     , Hdis86.IO
     , Hdis86.C
-    , Hdis86.Internal.Opcode
     , Hdis86.Internal.Map
+  other-modules:
+      Hdis86.Internal.Opcode
   ghc-options:       -Wall
   build-depends:
       base       >= 3 && < 5
