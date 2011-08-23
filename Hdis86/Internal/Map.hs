@@ -1,5 +1,4 @@
-{-# OPTIONS_HADDOCK
-    hide #-}
+-- | Internal module; use at your own risk.
 module Hdis86.Internal.Map
   ( UDTM, makeUDTM, lookupUDTM
   , register, opcode
