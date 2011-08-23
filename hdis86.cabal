@@ -103,6 +103,15 @@ library
       udis86-1.7/libudis86/syn-att.c
       udis86-1.7/libudis86/syn-intel.c
 
+  other-extensions:
+      DeriveDataTypeable
+    , RecordWildCards
+    , NamedFieldPuns
+    , ViewPatterns
+    , ForeignFunctionInterface
+    , EmptyDataDecls
+    , ScopedTypeVariables
+
 source-repository head
     type:     git
     location: git://github.com/kmcallister/hdis86.git
