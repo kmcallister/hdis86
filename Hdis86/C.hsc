@@ -5,7 +5,7 @@
 -- | Bare import of the @udis86@ C library.
 --
 -- This module is not recommended for most users. What you see is what you get.
--- The modules @'Hdis86.IO'@ and @'Hdis86.Pure'@ provide a more Haskell-friendly
+-- The modules "Hdis86.IO" and "Hdis86.Pure" provide a more Haskell-friendly
 -- interface to the same functionality.
 --
 -- If you want to use this module, see the @udis86@ documentation: <http://udis86.sourceforge.net>

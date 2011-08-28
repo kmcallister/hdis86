@@ -12,7 +12,7 @@
 -- this module's API is thoroughly imperative, but uses
 -- Haskellish types and automatic resource management.
 --
--- For a higher-level, @IO@-free API, see @'Hdis86.Pure'@.
+-- For a higher-level, @IO@-free API, see "Hdis86.Pure".
 --
 -- This module is fully thread-safe: any number of threads
 -- may manipulate one or several @'UD'@ objects at the same

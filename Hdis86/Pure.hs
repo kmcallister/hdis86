@@ -2,7 +2,7 @@
 --
 -- This is the simplest, most high-level interface.
 --
--- See @'Hdis86.IO'@ if you need more control or performance.
+-- See "Hdis86.IO" if you need more control or performance.
 module Hdis86.Pure
   ( -- * Simple disassembly
     disassemble
@@ -31,7 +31,7 @@ disWith f cfg bs = unsafePerformIO $ do
 -- | Disassemble machine code.
 --
 -- Common values for @'Config'@ such as @'intel32'@ or @'amd64'@
--- are provided in @'Hdis86.Types'@.
+-- are provided in "Hdis86.Types".
 --
 -- The output is produced lazily.
 disassemble :: Config -> BS.ByteString -> [Instruction]
