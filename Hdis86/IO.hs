@@ -58,6 +58,7 @@ import Data.Typeable ( Typeable )
 import Control.Concurrent.MVar
   ( MVar, newMVar, withMVar, modifyMVar_, addMVarFinalizer )
 import Foreign
+import Foreign.ForeignPtr.Unsafe
 import Foreign.C.String
 import Control.Applicative hiding ( Const )
 import Control.Monad
